@@ -1,7 +1,5 @@
 package com.hongluostudio.temp.hometempdemo;
 
-import android.content.ContentResolver;
-import android.content.Context;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -9,7 +7,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.view.MotionEventCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -41,117 +38,120 @@ import java.util.TimerTask;
 public class MainActivity extends AppCompatActivity {
 
     protected final String TAG = getClass().getSimpleName();
-    private final Timer timer = new Timer();
-    private StringBuffer showBuf, strBuf, tempBuf, statusBuf;
-    private TextView tvHello, tvShow, setTempText, setStatusText;
-    private FileInputStream fInSys;
-    private String temperature, humidity;
-    private SpannableString msp;
-    private int count = 0;
-    private Button mButtonUp, mButtonDown;
-    private float setTempValue = 18;
-    private float currentTemperatureValue = 0;
-    private SensorManager sm;
-    private Sensor ligthSensor;
-    private int heaterStatus = 0;
-    private int ifHeaterOnline = 1;
+    protected final int BRIGHTNESS_CHANGE_DELAY_CNT_MAX = 9;
+    protected final int AFTER_TOUCH_SCREENON_CNT_MAX = 9;
+    protected final int SET_TEMP_DEBOUNCE_CNT_MAX = 3;
+    protected final float SET_TEMPERATURE_MAX  = 30;
+    protected final float SET_TEMPERATURE_MIN  = 5;
+    protected final double SET_TEMPERATURE_STEP = 0.5;
 
-    private int iSettingBrightness = 120;
-    private int iOldSettingBrightness = 120;
-    private int iCurrentBrightness = 120;
-    private int iBrightnessDebounceCnt = 0;
+    protected final int SET_TEMP_MODE_COMPLETE = 0;
+    protected final int SET_TEMP_MODE_ONGOING = 1;
 
-    private float iModifiedSettingTemperature = 18;
-    private float iOldModifiedSettingTemperature = 18;
-    private float iCurrentSettingTemperature = 18;
-    private int iSettingTemperatureDebounceCnt = 0;
+    private final Timer mTimer = new Timer();
+    private StringBuffer mTempShowStrBuf, mLogShowStrBuf, mSetTempStrBuf, mStatusStrBuf;
+    private TextView  tvTempShow, tvLogShow, tvSetTemp, tvStatus;
+    private String mTemperatureStr, mHumidityStr;
+    private int mUpdateLogCnt = 0;
+    private Button btnPlus, btnMinus;
+    private float mSetTempValueFloat = 18;
+    private float mShowedTempValueFloat = 0;
+    private SensorManager mSensorManager;
+    private Sensor mLightSensor;
+    private boolean mIsHeaterEnable = false;
+    private boolean mIsHeaterOnline = true;
 
-    private int iScreenOnCnt = 0;
+    private int mSetBrightnessInt = 120;
+    private int mOldSetBrightnessInt = 120;
+    private int mCurrentBrightnessInt = 120;
+    private int mBrightnessDebounceCnt = 0;
+
+    private float mModifiedSetTempFloat = 18;
+    private float mOldModifiedSetTempFloat = 18;
+    private float mCurrentSetTempFloat = 18;
+    private int mSetTempDebounceCnt = 0;
+
+    private int mScreenOnCnt = 0;
+    private int mLogLineLength = 36;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        strBuf = new StringBuffer();
-        showBuf = new StringBuffer();
-        tempBuf = new StringBuffer();
-        statusBuf = new StringBuffer();
-        tvHello = (TextView) findViewById(R.id.HelloText);
-        tvShow = (TextView) findViewById(R.id.ShowText);
-        setTempText = (TextView) findViewById(R.id.setTempText);
-        setStatusText = (TextView) findViewById(R.id.setStatusText);
+        mLogShowStrBuf = new StringBuffer();
+        mTempShowStrBuf = new StringBuffer();
+        mSetTempStrBuf = new StringBuffer();
+        mStatusStrBuf = new StringBuffer();
+        tvLogShow = (TextView) findViewById(R.id.tvLogShowId);
+        tvTempShow = (TextView) findViewById(R.id.tvTempShowId);
+        tvSetTemp = (TextView) findViewById(R.id.tvSetTempId);
+        tvStatus = (TextView) findViewById(R.id.tvStatusId);
 
-        timer.schedule(new TimerTask() {
+        mTimer.schedule(new TimerTask() {
             @Override
             public void run() {
                 Message message = new Message();
                 message.what = 1;
-                handler.sendMessage(message);
+                mTimeHandler.sendMessage(message);
             }
         },1000,1000);
 
         /* https://blog.csdn.net/liuyuejinqiu/article/details/70230963 */
         /* https://developer.android.com/training/system-ui/navigation#java */
-        View decorView = getWindow().getDecorView();
-        /*int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;*/
-        int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN
+        View v = getWindow().getDecorView();
+        int opt = View.SYSTEM_UI_FLAG_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                 | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-        decorView.setSystemUiVisibility(uiOptions);
+        v.setSystemUiVisibility(opt);
 
-        mButtonUp = (Button) findViewById(R.id.buttonUp);
-        mButtonDown = (Button) findViewById(R.id.buttonDown);
+        btnPlus = (Button) findViewById(R.id.buttonUp);
+        btnMinus = (Button) findViewById(R.id.buttonDown);
 
-        mButtonUp.setOnClickListener(new View.OnClickListener(){
+        btnPlus.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                setTempValue += 0.5;
-                if(setTempValue > 30)
-                    setTempValue = 30;
-                iModifiedSettingTemperature = setTempValue;
-                setTempTextUpdate(0);
+                mSetTempValueFloat += SET_TEMPERATURE_STEP;
+                if(mSetTempValueFloat > SET_TEMPERATURE_MAX)
+                    mSetTempValueFloat = SET_TEMPERATURE_MAX;
+                mModifiedSetTempFloat = mSetTempValueFloat;
+                updateSetTempTextView(SET_TEMP_MODE_ONGOING);
             }
         });
 
-        mButtonDown.setOnClickListener(new View.OnClickListener(){
+        btnMinus.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                setTempValue -= 0.5;
-                if (setTempValue < 5)
-                    setTempValue = 5;
-                iModifiedSettingTemperature = setTempValue;
-                setTempTextUpdate(0);
+                mSetTempValueFloat -= SET_TEMPERATURE_STEP;
+                if (mSetTempValueFloat < SET_TEMPERATURE_MIN)
+                    mSetTempValueFloat = SET_TEMPERATURE_MIN;
+                mModifiedSetTempFloat = mSetTempValueFloat;
+                updateSetTempTextView(SET_TEMP_MODE_ONGOING);
             }
         });
 
-        sm = (SensorManager) getSystemService(SENSOR_SERVICE);
-        ligthSensor = sm.getDefaultSensor(Sensor.TYPE_LIGHT);
-        if (ligthSensor != null)
-            sm.registerListener(new LightSensorListener(), ligthSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        mLightSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+        if (mLightSensor != null)
+            mSensorManager.registerListener(new LightSensorListener(), mLightSensor, SensorManager.SENSOR_DELAY_NORMAL);
         else
-            Log.e(TAG, "lightSensor is null!!!\n");
+            Log.e(TAG, "mLightSensor is null!\n");
 
-        setTempTextUpdate(1);
+        updateSetTempTextView(SET_TEMP_MODE_COMPLETE);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         int action = event.getAction();
-        Log.e(TAG, "onTouchEvent: " + action + "\n");
-
+        Log.d(TAG, "onTouchEvent: " + action + "\n");
         switch(action) {
             case (MotionEvent.ACTION_DOWN) :
-                Log.d(TAG,"Action was DOWN");
+                //Log.d(TAG,"Action was DOWN");
             case (MotionEvent.ACTION_MOVE) :
-                Log.d(TAG,"Action was MOVE");
+                //Log.d(TAG,"Action was MOVE");
             case (MotionEvent.ACTION_UP) :
-                Log.d(TAG,"Action was UP");
-                iScreenOnCnt = 8;
+                //Log.d(TAG,"Action was UP");
+                mScreenOnCnt = AFTER_TOUCH_SCREENON_CNT_MAX;
                 return true;
             default :
                 return super.onTouchEvent(event);
@@ -163,21 +163,15 @@ public class MainActivity extends AppCompatActivity {
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
         }
+
         public void onSensorChanged(SensorEvent event) {
-            float acc = event.accuracy;
             float lux = event.values[0];
 
             Log.d(TAG, "lux: " + lux + "\n");
 
-            /* 获取系统亮度，但是只有在设定亮度为手动修改的情况下有效 */
-            /*ContentResolver contentResolver = getContentResolver();
-            int defVal = 200, brVal;
-            brVal = Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS, defVal);
-            Log.d(TAG, "System Screen Brightness: " + brVal + "\n");*/
-
             int brightness;
             if (lux < 20) {
-                    brightness = 0;
+                brightness = 0; // 不考虑关闭屏幕的场景（如，此时有touch事件），该值应为11
             } else if (lux < 40) {
                 brightness = 22;
             } else if (lux < 100) {
@@ -198,11 +192,11 @@ public class MainActivity extends AppCompatActivity {
                 brightness = 255;
             }
 
-            iSettingBrightness = brightness;
+            mSetBrightnessInt = brightness;
         }
     }
 
-    private int LCDBrightnessWrite(int brightness) {
+    private int writeBrightness(int brightness) {
         BufferedWriter bufWriter = null;
         FileWriter fileWriter = null;
 
@@ -211,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
             bufWriter = new BufferedWriter(fileWriter);
             bufWriter.write(String.valueOf(brightness));
             bufWriter.close();
-            Log.d(TAG, "LCDBrightnessWrite: " + brightness + "\n");
+            //Log.d(TAG, "writeBrightness: " + brightness + "\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -219,48 +213,59 @@ public class MainActivity extends AppCompatActivity {
         return 0;
     }
 
-    Handler handler = new Handler() {
+    Handler mTimeHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            if (count > 3600 || count == 0) { // 每小时更新一次数据
-                updateData();
-                count = 0;
+            getTemperatureHumidity();
+            if (mUpdateLogCnt > 600 || mUpdateLogCnt == 0) { // 5分钟更新一次数据
+                updateLogData();
+                mUpdateLogCnt = 1;
             }
-            count++;
+            
+            mUpdateLogCnt++;
             updateShow();
+
+            debounceBrightnessSetting();
+            debounceTemperatureSetting();
+            updateHeaterStatus();
+
+            if (mScreenOnCnt > 0)
+                mScreenOnCnt -= 1;
+
             super.handleMessage(msg);
-
-            BrightnessDebounceSetting();
-            SettingTempDebounceSetting();
-            heaterStatusUpdate();
-
-            if (iScreenOnCnt > 0)
-                iScreenOnCnt -= 1;
-            //Log.d(TAG, "Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC: " + Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC + "\n");
-            //Log.d(TAG, "Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL: " + Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL + "\n");
         }
     };
 
-    private int BrightnessDebounceSetting() {
-        if (iSettingBrightness != iOldSettingBrightness) {
-            iOldSettingBrightness = iSettingBrightness;
-            iBrightnessDebounceCnt = 0;
-        } else if (iBrightnessDebounceCnt < 3) {
-            iBrightnessDebounceCnt++;
-        } else if (iCurrentBrightness != iSettingBrightness) {
-            if (iScreenOnCnt > 0 && iSettingBrightness == 0 && iCurrentBrightness != 11) {
-                iCurrentBrightness = 11;
-                LCDBrightnessWrite(iCurrentBrightness);
-            } else if (iScreenOnCnt <=0) {
-                iCurrentBrightness = iSettingBrightness;
-                LCDBrightnessWrite(iCurrentBrightness);
-            }
+    private int getTemperatureHumidity() {
+        FileInputStream inputStream;
 
-        } else if (iScreenOnCnt > 0 ) {
-            if (iCurrentBrightness == 0) {
-                iCurrentBrightness = 11;
-                LCDBrightnessWrite(iCurrentBrightness);
-            }
+        try {
+            inputStream = new FileInputStream("/sys/class/hwmon/hwmon3/temp1_input");
+            byte[] bytes = new byte[16];
+            int n = 0;
+            n = inputStream.read(bytes);
+            float tempValue = Float.parseFloat(new String(bytes).substring(0, n - 1));
+            tempValue = new BigDecimal(tempValue / 1000).setScale(1, BigDecimal.ROUND_UP).floatValue();
+            mShowedTempValueFloat = tempValue;
+            mTemperatureStr = String.format("%2.1f℃", tempValue);
+            //Log.d(TAG, "n: " + n + ", mTemperatureStr: " + mTemperatureStr + "\n");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            inputStream = new FileInputStream("/sys/class/hwmon/hwmon3/humidity1_input");
+            byte[] bytes = new byte[16];
+            int n = 0;
+            n = inputStream.read(bytes);
+            float humiValue = Float.parseFloat(new String(bytes).substring(0, n - 1));
+            humiValue = new BigDecimal(humiValue / 1000).setScale(1, BigDecimal.ROUND_UP).floatValue();
+            mHumidityStr = String.format("%2.1f%%", humiValue);
+            //Log.d(TAG, "n: " + n + ", mHumidityStr: " + mHumidityStr + "\n");
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return 0;
@@ -270,213 +275,152 @@ public class MainActivity extends AppCompatActivity {
         Date date = new Date();
         SimpleDateFormat ft = new SimpleDateFormat("HH时mm分ss秒 \n yyyy年MM月dd日 EEEE", Locale.CHINESE);
 
-        try {
-            fInSys = new FileInputStream("/sys/class/hwmon/hwmon3/temp1_input");
-            byte[] bytes = new byte[16];
-            int n = 0;
-            n = fInSys.read(bytes);
-            float tempValue = Float.parseFloat(new String(bytes).substring(0, n - 1));
-            tempValue = new BigDecimal(tempValue / 1000).setScale(1, BigDecimal.ROUND_UP).floatValue();
-            currentTemperatureValue = tempValue;
-            temperature = String.format("%2.1f", tempValue);
-            //Log.d(TAG, "n: " + n + ", temperature: " + temperature + "\n");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                fInSys.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        try {
-            fInSys = new FileInputStream("/sys/class/hwmon/hwmon3/humidity1_input");
-            byte[] bytes = new byte[16];
-            int n = 0;
-            n = fInSys.read(bytes);
-            float humiValue = Float.parseFloat(new String(bytes).substring(0, n - 1));
-            humiValue = new BigDecimal(humiValue / 1000).setScale(1, BigDecimal.ROUND_UP).floatValue();
-            humidity = String.format("%2.1f%%", humiValue);
-            //Log.d(TAG, "n: " + n + ", humidity: " + humidity + "\n");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                fInSys.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        showBuf.delete(0, showBuf.length());
-        showBuf.append(" 温度: " + temperature + "℃ \n 湿度: " + humidity + " \n\n" + ft.format(date));
-        msp = new SpannableString(showBuf.toString());
-
-        msp.setSpan(new TypefaceSpan("sans"), 0, msp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        msp.setSpan(new AbsoluteSizeSpan(36,true), 0, msp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
+        mTempShowStrBuf.delete(0, mTempShowStrBuf.length());
+        mTempShowStrBuf.append(" 温度: " + mTemperatureStr + "℃ \n 湿度: " + mHumidityStr + " \n\n" + ft.format(date));
+        SpannableString ss = new SpannableString(mTempShowStrBuf.toString());
+        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new AbsoluteSizeSpan(36,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体大小（相对值,单位：像素） 参数表示为默认字体大小的多少倍
-        msp.setSpan(new RelativeSizeSpan(2.0f), 0, 24, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //2.0f表示默认字体大小的两倍
+        ss.setSpan(new RelativeSizeSpan(2.0f), 0, 24, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //2.0f表示默认字体大小的两倍
+        ss.setSpan(new ForegroundColorSpan(Color.BLUE), 0, 24, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new BackgroundColorSpan(Color.YELLOW), 0, 24, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new ForegroundColorSpan(Color.parseColor("#663366")), ss.length()-28, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new BackgroundColorSpan(Color.parseColor("#CCCC99")), ss.length()-28, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //粗体
 
-        msp.setSpan(new ForegroundColorSpan(Color.BLUE), 0, 24, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        msp.setSpan(new BackgroundColorSpan(Color.YELLOW), 0, 24, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-        msp.setSpan(new ForegroundColorSpan(Color.parseColor("#663366")), msp.length()-28, msp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        msp.setSpan(new BackgroundColorSpan(Color.parseColor("#CCCC99")), msp.length()-28, msp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-        msp.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, msp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //粗体
-
-        tvShow.setText(msp);
+        tvTempShow.setText(ss);
 
         return 0;
     }
 
-    private int updateData() {
+    private int updateLogData() {
         Date date = new Date();
         SimpleDateFormat ft = new SimpleDateFormat("MM-dd HH:mm");
 
-        try {
-            fInSys = new FileInputStream("/sys/class/hwmon/hwmon3/temp1_input");
-            byte[] bytes = new byte[16];
-            int n = 0;
-            n = fInSys.read(bytes);
-            float tempValue = Float.parseFloat(new String(bytes).substring(0, n - 1));
-            tempValue = new BigDecimal(tempValue / 1000).setScale(1, BigDecimal.ROUND_UP).floatValue();
-            temperature = String.format("%2.1f℃", tempValue);
-            //Log.d(TAG, "n: " + n + ", temperature: " + temperature + "\n");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                fInSys.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        if (mLogShowStrBuf.length() >= mLogLineLength * 3 * 24 * 12) {// 5分钟一次数据的情况下，保存3天的数据
+            String str = mLogShowStrBuf.substring(mLogLineLength, mLogShowStrBuf.length());
+            mLogShowStrBuf.delete(0, mLogShowStrBuf.length());
+            mLogShowStrBuf.append(str);
         }
+        mLogShowStrBuf.append(ft.format(date));
+        mLogShowStrBuf.append(" " + mTemperatureStr);
+        mLogShowStrBuf.append(" " + mHumidityStr);
+        mLogShowStrBuf.append(" " + mCurrentSetTempFloat);
+        if (mIsHeaterOnline)
+            mLogShowStrBuf.append("@");
+        else
+            mLogShowStrBuf.append(" ");
+        if (mIsHeaterEnable)
+            mLogShowStrBuf.append("+");
+        else
+            mLogShowStrBuf.append("-");
+        mLogShowStrBuf.append("\n");
+        mLogLineLength = mLogShowStrBuf.length();
+        //Log.d(TAG, "mLogShowStrBuf length: " + mLogShowStrBuf.length() + "\n");
 
-        try {
-            fInSys = new FileInputStream("/sys/class/hwmon/hwmon3/humidity1_input");
-            byte[] bytes = new byte[16];
-            int n = 0;
-            n = fInSys.read(bytes);
-            float humiValue = Float.parseFloat(new String(bytes).substring(0, n - 1));
-            humiValue = new BigDecimal(humiValue / 1000).setScale(1, BigDecimal.ROUND_UP).floatValue();
-            humidity = String.format("%2.1f%%", humiValue);
-            //Log.d(TAG, "n: " + n + ", humidity: " + humidity + "\n");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                fInSys.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (strBuf.length() >= 36 * 72) {// 每小时更新一次数据的情况下，保存3天的数据
-            String str = strBuf.substring(36 * 1, strBuf.length());
-            strBuf.delete(0, strBuf.length());
-            strBuf.append(str);
-        }
-        strBuf.append(ft.format(date) + " -- T: " + temperature + " -- H: " + humidity + "\n");
-        msp = new SpannableString(strBuf.toString());
-
+        SpannableString ss = new SpannableString(mLogShowStrBuf.toString());
         // https://blog.csdn.net/pcaxb/article/details/47341249
         //设置字体(default,default-bold,monospace,serif,sans-serif)
-        msp.setSpan(new TypefaceSpan("serif"), 0, msp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new TypefaceSpan("serif"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体大小（绝对值,单位：像素）
-        msp.setSpan(new AbsoluteSizeSpan(16,true), 0, msp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
+        ss.setSpan(new AbsoluteSizeSpan(16,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体前景色
-        msp.setSpan(new ForegroundColorSpan(Color.BLACK), 0, msp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
+        ss.setSpan(new ForegroundColorSpan(Color.BLACK), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体背景色
-        msp.setSpan(new BackgroundColorSpan(Color.LTGRAY), 0, msp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-        tvHello.setText(msp);
-        Log.d(TAG, "strBuf length: " + strBuf.length() + "\n");
+        ss.setSpan(new BackgroundColorSpan(Color.LTGRAY), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        tvLogShow.setText(ss);
 
         // Update ScrollView
-        ScrollView mScrollView = (ScrollView) findViewById(R.id.HelloScrollView);
-        mScrollView.smoothScrollTo(0, tvHello.getBottom());
+        ScrollView mScrollView = (ScrollView) findViewById(R.id.svLogShow);
+        mScrollView.smoothScrollTo(0, tvLogShow.getBottom());
 
         return 0;
     }
 
-    // 亮度调节参考 https://blog.csdn.net/wzy_1988/article/details/49472611
-    private int setTempTextUpdate(int mode) {
-        /*Window window = getWindow();
-        WindowManager.LayoutParams lp = window.getAttributes();
-        lp.screenBrightness = setTempValue/255.0f;
-        window.setAttributes(lp);*/
+    private int updateSetTempTextView(int mode) {
+        mSetTempStrBuf.delete(0, mSetTempStrBuf.length());
+        mSetTempStrBuf.append(" 设置温度: " + mSetTempValueFloat + "℃\n");
+        SpannableString ss = new SpannableString(mSetTempStrBuf.toString());
+        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new AbsoluteSizeSpan(22,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        if (mode == SET_TEMP_MODE_ONGOING)
+            ss.setSpan(new BackgroundColorSpan(Color.RED), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-        tempBuf.delete(0, tempBuf.length());
-        tempBuf.append(" 设置温度: " + setTempValue + "℃\n");
-        msp = new SpannableString(tempBuf.toString());
-        msp.setSpan(new TypefaceSpan("sans"), 0, msp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        msp.setSpan(new AbsoluteSizeSpan(22,true), 0, msp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        if (mode == 0)
-            msp.setSpan(new BackgroundColorSpan(Color.RED), 0, msp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-        msp.setSpan(new ForegroundColorSpan(Color.BLUE), 0, msp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        setTempText.setText(msp);
+        ss.setSpan(new ForegroundColorSpan(Color.BLUE), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        tvSetTemp.setText(ss);
 
         return 0;
     }
 
-    private int SettingTempDebounceSetting() {
-        if (iModifiedSettingTemperature != iOldModifiedSettingTemperature) {
-            iOldModifiedSettingTemperature = iModifiedSettingTemperature;
-            iSettingTemperatureDebounceCnt = 0;
-        } else if (iSettingTemperatureDebounceCnt < 3) {
-            iSettingTemperatureDebounceCnt++;
-        } else if (iCurrentSettingTemperature != iModifiedSettingTemperature) {
-            iCurrentSettingTemperature = iModifiedSettingTemperature;
-            // SettingTemperature updated
-            setTempTextUpdate(1);
-        }
-
-        return 0;
-    }
-
-    private int heaterStatusUpdate() {
-        if (currentTemperatureValue < iCurrentSettingTemperature - 0.5) {
+    private int updateHeaterStatus() {
+        if (mShowedTempValueFloat < mCurrentSetTempFloat - SET_TEMPERATURE_STEP) {
             // 开始加热
-            heaterStatus = 1;
-        } else if (currentTemperatureValue > iCurrentSettingTemperature + 0.5) {
+            mIsHeaterEnable = true;
+        } else if (mShowedTempValueFloat > mCurrentSetTempFloat + SET_TEMPERATURE_STEP) {
             // 停止加热
-            heaterStatus = 0;
+            mIsHeaterEnable = false;
         }
-        setStatusTextUpdate();
+        updateStatusTextView();
         return 0;
     }
 
-    private int setStatusTextUpdate() {
-        statusBuf.delete(0, statusBuf.length());
-        if (ifHeaterOnline != 0) {
-            statusBuf.append("在线");
-            if (heaterStatus != 0) {
-                statusBuf.append(", 加热中");
+    private int updateStatusTextView() {
+        mStatusStrBuf.delete(0, mStatusStrBuf.length());
+        if (mIsHeaterOnline) {
+            mStatusStrBuf.append("在线");
+            if (mIsHeaterEnable) {
+                mStatusStrBuf.append(", 加热中");
             }
         } else {
-            statusBuf.append("加热器不在线");
+            mStatusStrBuf.append("加热器不在线");
         }
 
-        msp = new SpannableString(statusBuf.toString());
-        msp.setSpan(new TypefaceSpan("sans"), 0, msp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        msp.setSpan(new AbsoluteSizeSpan(22,true), 0, msp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        SpannableString ss = new SpannableString(mStatusStrBuf.toString());
+        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new AbsoluteSizeSpan(22,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-        msp.setSpan(new ForegroundColorSpan(Color.BLUE), 0, msp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        setStatusText.setText(msp);
+        ss.setSpan(new ForegroundColorSpan(Color.BLUE), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        tvStatus.setText(ss);
 
         return 0;
     }
 
+    private int debounceTemperatureSetting() {
+        if (mModifiedSetTempFloat != mOldModifiedSetTempFloat) {
+            mOldModifiedSetTempFloat = mModifiedSetTempFloat;
+            mSetTempDebounceCnt = 0;
+        } else if (mSetTempDebounceCnt < SET_TEMP_DEBOUNCE_CNT_MAX) {
+            mSetTempDebounceCnt++;
+        } else if (mCurrentSetTempFloat != mModifiedSetTempFloat) {
+            mCurrentSetTempFloat = mModifiedSetTempFloat;
+            // SettingTemperature updated
+            updateSetTempTextView(SET_TEMP_MODE_COMPLETE);
+        }
 
+        return 0;
+    }
 
+    private int debounceBrightnessSetting() {
+        if (mSetBrightnessInt != mOldSetBrightnessInt) {
+            mOldSetBrightnessInt = mSetBrightnessInt;
+            mBrightnessDebounceCnt = 0;
+        } else if (mBrightnessDebounceCnt < BRIGHTNESS_CHANGE_DELAY_CNT_MAX) {
+            mBrightnessDebounceCnt++;
+        } else if (mCurrentBrightnessInt != mSetBrightnessInt) {
+            if (mScreenOnCnt > 0 && mSetBrightnessInt == 0 && mCurrentBrightnessInt != 11) {
+                mCurrentBrightnessInt = 11;
+                writeBrightness(mCurrentBrightnessInt);
+            } else if (mScreenOnCnt <= 0) {
+                mCurrentBrightnessInt = mSetBrightnessInt;
+                writeBrightness(mCurrentBrightnessInt);
+            }
+        } else if (mScreenOnCnt > 0 ) {
+            if (mCurrentBrightnessInt == 0) {
+                mCurrentBrightnessInt = 11;
+                writeBrightness(mCurrentBrightnessInt);
+            }
+        }
+
+        return 0;
+    }
 }

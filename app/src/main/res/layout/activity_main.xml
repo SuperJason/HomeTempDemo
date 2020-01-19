@@ -12,7 +12,7 @@
         android:id="@+id/ConstraintLayoutLeftTop"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginBottom="200dp"
+        android:layout_marginBottom="160dp"
         android:background="@android:color/holo_purple"
         android:gravity="center|start"
         android:scrollbars="vertical"
@@ -22,7 +22,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ScrollView
-            android:id="@+id/HelloScrollView"
+            android:id="@+id/svLogShow"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fillViewport="true"
@@ -33,7 +33,7 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <TextView
-                android:id="@+id/HelloText"
+                android:id="@+id/tvLogShowId"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical|center_horizontal"
@@ -56,7 +56,7 @@
         app:layout_constraintVertical_bias="1.0">
 
         <TextView
-            android:id="@+id/setTempText"
+            android:id="@+id/tvSetTempId"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
@@ -70,29 +70,30 @@
             android:id="@+id/buttonUp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="32dp"
             android:layout_marginStart="32dp"
             android:text="@string/buttonUp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvSetTempId" />
 
         <Button
             android:id="@+id/buttonDown"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="32dp"
             android:layout_marginEnd="32dp"
             android:text="@string/buttonDown"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvSetTempId" />
 
         <TextView
-            android:id="@+id/setStatusText"
+            android:id="@+id/tvStatusId"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="TextView"
-            app:layout_constraintBottom_toTopOf="@+id/setTempText"
+            app:layout_constraintBottom_toTopOf="@+id/tvSetTempId"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.498"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -110,7 +111,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
-            android:id="@+id/ShowText"
+            android:id="@+id/tvTempShowId"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
