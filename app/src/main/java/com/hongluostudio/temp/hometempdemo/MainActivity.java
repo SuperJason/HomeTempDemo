@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
     private Sensor mLightSensor;
     private boolean mIsHeaterEnable = false;
     private boolean mIsHeaterOnline = true;
+    private boolean mIsHeaterRemoteEnabled = false;
 
     private int mSetBrightnessInt = 120;
     private int mOldSetBrightnessInt = 120;
@@ -170,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "lux: " + lux + "\n");
 
             int brightness;
-            if (lux < 20) {
+            if (lux < 5) {
                 brightness = 0; // 不考虑关闭屏幕的场景（如，此时有touch事件），该值应为11
             } else if (lux < 40) {
                 brightness = 22;
@@ -314,6 +315,11 @@ public class MainActivity extends AppCompatActivity {
             mLogShowStrBuf.append("+");
         else
             mLogShowStrBuf.append("-");
+        if (mIsHeaterRemoteEnabled)
+            mLogShowStrBuf.append("+");
+        else
+            mLogShowStrBuf.append("-");
+
         mLogShowStrBuf.append("\n");
         mLogLineLength = mLogShowStrBuf.length();
         //Log.d(TAG, "mLogShowStrBuf length: " + mLogShowStrBuf.length() + "\n");
@@ -353,6 +359,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private int updateHeaterStatus() {
+
+        // Update mIsHeaterOnline
+
+        if (mIsHeaterOnline) {
+            // Update mIsHeaterRemoteEnabled
+        } else {
+            mIsHeaterRemoteEnabled = false;
+        }
+
         if (mShowedTempValueFloat < mCurrentSetTempFloat - SET_TEMPERATURE_STEP) {
             // 开始加热
             mIsHeaterEnable = true;
