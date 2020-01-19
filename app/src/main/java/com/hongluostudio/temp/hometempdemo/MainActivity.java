@@ -6,6 +6,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -24,11 +26,17 @@ import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -47,6 +55,10 @@ public class MainActivity extends AppCompatActivity {
 
     protected final int SET_TEMP_MODE_COMPLETE = 0;
     protected final int SET_TEMP_MODE_ONGOING = 1;
+
+    protected final int HTTP_CMD_HEATER_ENABLE = 1;
+    protected final int HTTP_CMD_HEATER_DISABLE = 2;
+    protected final int HTTP_REQUEST_SEND_CNT_MAX = 10;
 
     private final Timer mTimer = new Timer();
     private StringBuffer mTempShowStrBuf, mLogShowStrBuf, mSetTempStrBuf, mStatusStrBuf;
@@ -74,6 +86,10 @@ public class MainActivity extends AppCompatActivity {
 
     private int mScreenOnCnt = 0;
     private int mLogLineLength = 36;
+
+    private HandlerThread mHttpHandlerThread;
+    private Handler mHttpHandler;
+    private int mHttpRequestSendCnt = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,6 +153,10 @@ public class MainActivity extends AppCompatActivity {
             mSensorManager.registerListener(new LightSensorListener(), mLightSensor, SensorManager.SENSOR_DELAY_NORMAL);
         else
             Log.e(TAG, "mLightSensor is null!\n");
+
+        mHttpHandlerThread = new HandlerThread("http");
+        mHttpHandlerThread.start();
+        mHttpHandler = new httpHandler(mHttpHandlerThread.getLooper());
 
         updateSetTempTextView(SET_TEMP_MODE_COMPLETE);
     }
@@ -375,6 +395,21 @@ public class MainActivity extends AppCompatActivity {
             // 停止加热
             mIsHeaterEnable = false;
         }
+
+        int cmd;
+        if (mIsHeaterEnable) {
+            cmd = HTTP_CMD_HEATER_ENABLE;
+        } else {
+            cmd = HTTP_CMD_HEATER_DISABLE;
+        }
+
+        if (mHttpRequestSendCnt > 0) {
+            mHttpRequestSendCnt--;
+        } else {
+            mHttpRequestSendCnt = HTTP_REQUEST_SEND_CNT_MAX;
+            mHttpHandler.sendEmptyMessage(cmd);
+        }
+
         updateStatusTextView();
         return 0;
     }
@@ -437,5 +472,71 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return 0;
+    }
+
+    // https://blog.csdn.net/BugGodFather/article/details/93234755
+    private class httpHandler extends Handler {
+        public httpHandler(Looper looper) {
+            super(looper);
+        }
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case HTTP_CMD_HEATER_ENABLE:
+                    sendRequest(HTTP_CMD_HEATER_ENABLE);
+                    break;
+                case HTTP_CMD_HEATER_DISABLE:
+                    sendRequest(HTTP_CMD_HEATER_DISABLE);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+    private void sendRequest(int cmd) {
+        String registerUrl = "http://192.168.1.119/config?command=switch";
+        try {
+            URL url = new URL(registerUrl);
+            HttpURLConnection postConnection = (HttpURLConnection) url.openConnection();
+            postConnection.setRequestMethod("POST");
+            postConnection.setConnectTimeout(3000);
+            postConnection.setReadTimeout(3000);
+            postConnection.setDoInput(true);
+            postConnection.setDoOutput(true);
+            postConnection.setRequestProperty("Content-type", "application/json");
+            String postParms;
+            switch (cmd) {
+                case HTTP_CMD_HEATER_ENABLE:
+                    postParms = "{\"Response\":{\"status\":1}}";
+                    break;
+                case HTTP_CMD_HEATER_DISABLE:
+                default:
+                    postParms = "{\"Response\":{\"status\":0}}";
+            }
+            OutputStream outputStream = postConnection.getOutputStream();
+            outputStream.write(postParms.getBytes());
+            outputStream.flush();
+            final StringBuffer buffer = new StringBuffer();
+            int code = postConnection.getResponseCode();
+            if (code == 200) {
+                InputStream inputStream = postConnection.getInputStream();
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                String line = null;
+                while ((line = bufferedReader.readLine()) != null) {
+                    buffer.append(line);
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (buffer.length() > 0) {
+                            Log.d(TAG, "Read Respone: " + buffer.toString());
+                        }
+                    }
+                });
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
