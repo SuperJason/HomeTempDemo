@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">室内温度控制器</string>
+    <string name="app_name">时间温湿度显示器</string>
     <string name="nothing">Nothing</string>
     <string name="helloworld">HelloWorld!</string>
     <string name="buttonUp">加</string>

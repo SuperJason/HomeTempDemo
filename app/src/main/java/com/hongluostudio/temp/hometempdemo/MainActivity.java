@@ -48,48 +48,24 @@ public class MainActivity extends AppCompatActivity {
     protected final String TAG = getClass().getSimpleName();
     protected final int BRIGHTNESS_CHANGE_DELAY_CNT_MAX = 9;
     protected final int AFTER_TOUCH_SCREENON_CNT_MAX = 9;
-    protected final int SET_TEMP_DEBOUNCE_CNT_MAX = 3;
-    protected final float SET_TEMPERATURE_MAX  = 30;
-    protected final float SET_TEMPERATURE_MIN  = 5;
-    protected final double SET_TEMPERATURE_STEP = 0.5;
-
-    protected final int SET_TEMP_MODE_COMPLETE = 0;
-    protected final int SET_TEMP_MODE_ONGOING = 1;
-
-    protected final int HTTP_CMD_HEATER_ENABLE = 1;
-    protected final int HTTP_CMD_HEATER_DISABLE = 2;
-    protected final int HTTP_REQUEST_SEND_CNT_MAX = 10;
 
     private final Timer mTimer = new Timer();
-    private StringBuffer mTempShowStrBuf, mLogShowStrBuf, mSetTempStrBuf, mStatusStrBuf;
-    private TextView  tvTempShow, tvLogShow, tvSetTemp, tvStatus;
+    private StringBuffer mTempShowStrBuf, mTimeShowStrBuf, mDataShowStrBuf, mLogShowStrBuf;
+    private TextView tvTimeShow, tvDataShow, tvTempShow, tvLogShow;
     private String mTemperatureStr, mHumidityStr;
     private int mUpdateLogCnt = 0;
-    private Button btnPlus, btnMinus;
-    private float mSetTempValueFloat = 18;
-    private float mShowedTempValueFloat = 0;
     private SensorManager mSensorManager;
     private Sensor mLightSensor;
-    private boolean mIsHeaterEnable = false;
-    private boolean mIsHeaterOnline = true;
-    private boolean mIsHeaterRemoteEnabled = false;
 
     private int mSetBrightnessInt = 120;
     private int mOldSetBrightnessInt = 120;
     private int mCurrentBrightnessInt = 120;
     private int mBrightnessDebounceCnt = 0;
 
-    private float mModifiedSetTempFloat = 18;
-    private float mOldModifiedSetTempFloat = 18;
-    private float mCurrentSetTempFloat = 18;
-    private int mSetTempDebounceCnt = 0;
-
     private int mScreenOnCnt = 0;
     private int mLogLineLength = 36;
 
     private HandlerThread mHttpHandlerThread;
-    private Handler mHttpHandler;
-    private int mHttpRequestSendCnt = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,12 +74,12 @@ public class MainActivity extends AppCompatActivity {
 
         mLogShowStrBuf = new StringBuffer();
         mTempShowStrBuf = new StringBuffer();
-        mSetTempStrBuf = new StringBuffer();
-        mStatusStrBuf = new StringBuffer();
+        mTimeShowStrBuf = new StringBuffer();
+        mDataShowStrBuf = new StringBuffer();
         tvLogShow = (TextView) findViewById(R.id.tvLogShowId);
         tvTempShow = (TextView) findViewById(R.id.tvTempShowId);
-        tvSetTemp = (TextView) findViewById(R.id.tvSetTempId);
-        tvStatus = (TextView) findViewById(R.id.tvStatusId);
+        tvTimeShow = (TextView) findViewById(R.id.tvTimeShowId);
+        tvDataShow = (TextView) findViewById(R.id.tvDataShowId);
 
         mTimer.schedule(new TimerTask() {
             @Override
@@ -122,31 +98,6 @@ public class MainActivity extends AppCompatActivity {
                 | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
         v.setSystemUiVisibility(opt);
 
-        btnPlus = (Button) findViewById(R.id.buttonUp);
-        btnMinus = (Button) findViewById(R.id.buttonDown);
-
-        btnPlus.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                mSetTempValueFloat += SET_TEMPERATURE_STEP;
-                if(mSetTempValueFloat > SET_TEMPERATURE_MAX)
-                    mSetTempValueFloat = SET_TEMPERATURE_MAX;
-                mModifiedSetTempFloat = mSetTempValueFloat;
-                updateSetTempTextView(SET_TEMP_MODE_ONGOING);
-            }
-        });
-
-        btnMinus.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                mSetTempValueFloat -= SET_TEMPERATURE_STEP;
-                if (mSetTempValueFloat < SET_TEMPERATURE_MIN)
-                    mSetTempValueFloat = SET_TEMPERATURE_MIN;
-                mModifiedSetTempFloat = mSetTempValueFloat;
-                updateSetTempTextView(SET_TEMP_MODE_ONGOING);
-            }
-        });
-
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         mLightSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         if (mLightSensor != null)
@@ -156,9 +107,6 @@ public class MainActivity extends AppCompatActivity {
 
         mHttpHandlerThread = new HandlerThread("http");
         mHttpHandlerThread.start();
-        mHttpHandler = new httpHandler(mHttpHandlerThread.getLooper());
-
-        updateSetTempTextView(SET_TEMP_MODE_COMPLETE);
     }
 
     @Override
@@ -238,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             getTemperatureHumidity();
-            if (mUpdateLogCnt > 600 || mUpdateLogCnt == 0) { // 5分钟更新一次数据
+            if (mUpdateLogCnt > 3/*3600*/ || mUpdateLogCnt == 0) { // 1小时更新一次数据
                 updateLogData();
                 mUpdateLogCnt = 1;
             }
@@ -247,8 +195,6 @@ public class MainActivity extends AppCompatActivity {
             updateShow();
 
             debounceBrightnessSetting();
-            debounceTemperatureSetting();
-            updateHeaterStatus();
 
             if (mScreenOnCnt > 0)
                 mScreenOnCnt -= 1;
@@ -267,7 +213,6 @@ public class MainActivity extends AppCompatActivity {
             n = inputStream.read(bytes);
             float tempValue = Float.parseFloat(new String(bytes).substring(0, n - 1));
             tempValue = new BigDecimal(tempValue / 1000).setScale(1, BigDecimal.ROUND_UP).floatValue();
-            mShowedTempValueFloat = tempValue;
             mTemperatureStr = String.format("%2.1f℃", tempValue);
             //Log.d(TAG, "n: " + n + ", mTemperatureStr: " + mTemperatureStr + "\n");
 
@@ -294,22 +239,52 @@ public class MainActivity extends AppCompatActivity {
 
     private int updateShow() {
         Date date = new Date();
-        SimpleDateFormat ft = new SimpleDateFormat("HH时mm分ss秒 \n yyyy年MM月dd日 EEEE", Locale.CHINESE);
+        SimpleDateFormat fTime = new SimpleDateFormat("HH:mm ss", Locale.CHINESE);
+        SimpleDateFormat fDate = new SimpleDateFormat("yyyy年MM月dd日 EEEE", Locale.CHINESE);
 
         mTempShowStrBuf.delete(0, mTempShowStrBuf.length());
-        mTempShowStrBuf.append(" 温度: " + mTemperatureStr + "℃ \n 湿度: " + mHumidityStr + " \n\n" + ft.format(date));
-        SpannableString ss = new SpannableString(mTempShowStrBuf.toString());
-        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ss.setSpan(new AbsoluteSizeSpan(36,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        //设置字体大小（相对值,单位：像素） 参数表示为默认字体大小的多少倍
-        ss.setSpan(new RelativeSizeSpan(2.0f), 0, 24, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //2.0f表示默认字体大小的两倍
-        ss.setSpan(new ForegroundColorSpan(Color.BLUE), 0, 24, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ss.setSpan(new BackgroundColorSpan(Color.YELLOW), 0, 24, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ss.setSpan(new ForegroundColorSpan(Color.parseColor("#663366")), ss.length()-28, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ss.setSpan(new BackgroundColorSpan(Color.parseColor("#CCCC99")), ss.length()-28, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ss.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //粗体
+        mTempShowStrBuf.append(" 温度: " + mTemperatureStr + " 湿度: " + mHumidityStr);
 
-        tvTempShow.setText(ss);
+        mTimeShowStrBuf.delete(0,mTimeShowStrBuf.length());
+        mTimeShowStrBuf.append(fTime.format(date));
+
+        mDataShowStrBuf.delete(0,mDataShowStrBuf.length());
+        mDataShowStrBuf.append(fDate.format(date));
+
+        SpannableString ssTemp = new SpannableString(mTempShowStrBuf.toString());
+        ssTemp.setSpan(new TypefaceSpan("sans"), 0, ssTemp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssTemp.setSpan(new AbsoluteSizeSpan(18,true), 0, ssTemp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        //设置字体大小（相对值,单位：像素） 参数表示为默认字体大小的多少倍
+        ssTemp.setSpan(new RelativeSizeSpan(2.0f), 0, ssTemp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //2.0f表示默认字体大小的两倍
+        ssTemp.setSpan(new ForegroundColorSpan(Color.WHITE), 0, ssTemp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        //ssTemp.setSpan(new BackgroundColorSpan(Color.YELLOW), 0, ssTemp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssTemp.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, ssTemp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //粗体
+
+        tvTempShow.setText(ssTemp);
+
+        SpannableString ssData = new SpannableString(mDataShowStrBuf.toString());
+        ssData.setSpan(new TypefaceSpan("sans"), 0, ssData.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssData.setSpan(new AbsoluteSizeSpan(36,true), 0, ssData.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        //设置字体大小（相对值,单位：像素） 参数表示为默认字体大小的多少倍
+        //ssData.setSpan(new RelativeSizeSpan(2.0f), 0, ssData.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //2.0f表示默认字体大小的两倍
+        ssData.setSpan(new ForegroundColorSpan(Color.BLACK), 0, ssData.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        //ssData.setSpan(new BackgroundColorSpan(Color.YELLOW), 0, ssData.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssData.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, ssData.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //粗体
+
+        tvDataShow.setText(ssData);
+
+        SpannableString ssTime = new SpannableString(mTimeShowStrBuf.toString());
+        ssTime.setSpan(new TypefaceSpan("sans"), 0, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssTime.setSpan(new AbsoluteSizeSpan(36,true), 0, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        //设置字体大小（相对值,单位：像素） 参数表示为默认字体大小的多少倍
+        ssTime.setSpan(new RelativeSizeSpan(6.0f), 0, ssTime.length() - 3, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //2.0f表示默认字体大小的两倍
+        ssTime.setSpan(new ForegroundColorSpan(Color.BLACK), 0, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        //ssTime.setSpan(new BackgroundColorSpan(Color.YELLOW), 0, 8, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        //ssTime.setSpan(new ForegroundColorSpan(Color.WHITE), ssTime.length()-15, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        //ssTime.setSpan(new BackgroundColorSpan(Color.parseColor("#CCCC99")), ssTime.length()-15, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssTime.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //粗体
+
+        tvTimeShow.setText(ssTime);
 
         return 0;
     }
@@ -326,19 +301,25 @@ public class MainActivity extends AppCompatActivity {
         mLogShowStrBuf.append(ft.format(date));
         mLogShowStrBuf.append(" " + mTemperatureStr);
         mLogShowStrBuf.append(" " + mHumidityStr);
-        mLogShowStrBuf.append(" " + mCurrentSetTempFloat);
-        if (mIsHeaterOnline)
-            mLogShowStrBuf.append("@");
-        else
-            mLogShowStrBuf.append(" ");
-        if (mIsHeaterEnable)
-            mLogShowStrBuf.append("+");
-        else
-            mLogShowStrBuf.append("-");
-        if (mIsHeaterRemoteEnabled)
-            mLogShowStrBuf.append("+");
-        else
-            mLogShowStrBuf.append("-");
+
+        mLogShowStrBuf.delete(0, mLogShowStrBuf.length());
+        // 公历
+        //mLogShowStrBuf.append("公历: \n");
+        //SimpleDateFormat fDate = new SimpleDateFormat("yyyy年MM月dd日 EEEE", Locale.CHINESE);
+        SimpleDateFormat fDate = new SimpleDateFormat("yyyy年MM月dd日", Locale.CHINESE);
+        mLogShowStrBuf.append(fDate.format(date) + "\n");
+        fDate = new SimpleDateFormat("EEEE", Locale.CHINESE);
+        mLogShowStrBuf.append(fDate.format(date));
+        mLogShowStrBuf.append("\n\n");
+
+        // 农历
+        //mLogShowStrBuf.append("农历: \n");
+        mLogShowStrBuf.append(LunarUtils.getLunar(2022, 7, 3));
+
+        // 温湿度
+        mLogShowStrBuf.append("\n\n");
+        mLogShowStrBuf.append(" 温度: " + mTemperatureStr + "\n");
+        mLogShowStrBuf.append(" 湿度: " + mHumidityStr);
 
         mLogShowStrBuf.append("\n");
         mLogLineLength = mLogShowStrBuf.length();
@@ -347,105 +328,18 @@ public class MainActivity extends AppCompatActivity {
         SpannableString ss = new SpannableString(mLogShowStrBuf.toString());
         // https://blog.csdn.net/pcaxb/article/details/47341249
         //设置字体(default,default-bold,monospace,serif,sans-serif)
-        ss.setSpan(new TypefaceSpan("serif"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体大小（绝对值,单位：像素）
-        ss.setSpan(new AbsoluteSizeSpan(16,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体前景色
-        ss.setSpan(new ForegroundColorSpan(Color.BLACK), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new ForegroundColorSpan(Color.WHITE), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体背景色
-        ss.setSpan(new BackgroundColorSpan(Color.LTGRAY), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        //ss.setSpan(new BackgroundColorSpan(Color.LTGRAY), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         tvLogShow.setText(ss);
 
         // Update ScrollView
         ScrollView mScrollView = (ScrollView) findViewById(R.id.svLogShow);
         mScrollView.smoothScrollTo(0, tvLogShow.getBottom());
-
-        return 0;
-    }
-
-    private int updateSetTempTextView(int mode) {
-        mSetTempStrBuf.delete(0, mSetTempStrBuf.length());
-        mSetTempStrBuf.append(" 设置温度: " + mSetTempValueFloat + "℃\n");
-        SpannableString ss = new SpannableString(mSetTempStrBuf.toString());
-        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ss.setSpan(new AbsoluteSizeSpan(22,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        if (mode == SET_TEMP_MODE_ONGOING)
-            ss.setSpan(new BackgroundColorSpan(Color.RED), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-        ss.setSpan(new ForegroundColorSpan(Color.BLUE), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        tvSetTemp.setText(ss);
-
-        return 0;
-    }
-
-    private int updateHeaterStatus() {
-
-        // Update mIsHeaterOnline
-
-        if (mIsHeaterOnline) {
-            // Update mIsHeaterRemoteEnabled
-        } else {
-            mIsHeaterRemoteEnabled = false;
-        }
-
-        if (mShowedTempValueFloat < mCurrentSetTempFloat - SET_TEMPERATURE_STEP) {
-            // 开始加热
-            mIsHeaterEnable = true;
-        } else if (mShowedTempValueFloat > mCurrentSetTempFloat + SET_TEMPERATURE_STEP) {
-            // 停止加热
-            mIsHeaterEnable = false;
-        }
-
-        int cmd;
-        if (mIsHeaterEnable) {
-            cmd = HTTP_CMD_HEATER_ENABLE;
-        } else {
-            cmd = HTTP_CMD_HEATER_DISABLE;
-        }
-
-        if (mHttpRequestSendCnt > 0) {
-            mHttpRequestSendCnt--;
-        } else {
-            mHttpRequestSendCnt = HTTP_REQUEST_SEND_CNT_MAX;
-            mHttpHandler.sendEmptyMessage(cmd);
-        }
-
-        updateStatusTextView();
-        return 0;
-    }
-
-    private int updateStatusTextView() {
-        mStatusStrBuf.delete(0, mStatusStrBuf.length());
-        if (mIsHeaterOnline) {
-            mStatusStrBuf.append("在线");
-            if (mIsHeaterEnable) {
-                mStatusStrBuf.append(", 加热中");
-            }
-        } else {
-            mStatusStrBuf.append("加热器不在线");
-        }
-
-        SpannableString ss = new SpannableString(mStatusStrBuf.toString());
-        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ss.setSpan(new AbsoluteSizeSpan(22,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-        ss.setSpan(new ForegroundColorSpan(Color.BLUE), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        tvStatus.setText(ss);
-
-        return 0;
-    }
-
-    private int debounceTemperatureSetting() {
-        if (mModifiedSetTempFloat != mOldModifiedSetTempFloat) {
-            mOldModifiedSetTempFloat = mModifiedSetTempFloat;
-            mSetTempDebounceCnt = 0;
-        } else if (mSetTempDebounceCnt < SET_TEMP_DEBOUNCE_CNT_MAX) {
-            mSetTempDebounceCnt++;
-        } else if (mCurrentSetTempFloat != mModifiedSetTempFloat) {
-            mCurrentSetTempFloat = mModifiedSetTempFloat;
-            // SettingTemperature updated
-            updateSetTempTextView(SET_TEMP_MODE_COMPLETE);
-        }
 
         return 0;
     }
@@ -472,71 +366,5 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return 0;
-    }
-
-    // https://blog.csdn.net/BugGodFather/article/details/93234755
-    private class httpHandler extends Handler {
-        public httpHandler(Looper looper) {
-            super(looper);
-        }
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case HTTP_CMD_HEATER_ENABLE:
-                    sendRequest(HTTP_CMD_HEATER_ENABLE);
-                    break;
-                case HTTP_CMD_HEATER_DISABLE:
-                    sendRequest(HTTP_CMD_HEATER_DISABLE);
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-    private void sendRequest(int cmd) {
-        String registerUrl = "http://192.168.1.119/config?command=switch";
-        try {
-            URL url = new URL(registerUrl);
-            HttpURLConnection postConnection = (HttpURLConnection) url.openConnection();
-            postConnection.setRequestMethod("POST");
-            postConnection.setConnectTimeout(3000);
-            postConnection.setReadTimeout(3000);
-            postConnection.setDoInput(true);
-            postConnection.setDoOutput(true);
-            postConnection.setRequestProperty("Content-type", "application/json");
-            String postParms;
-            switch (cmd) {
-                case HTTP_CMD_HEATER_ENABLE:
-                    postParms = "{\"Response\":{\"status\":1}}";
-                    break;
-                case HTTP_CMD_HEATER_DISABLE:
-                default:
-                    postParms = "{\"Response\":{\"status\":0}}";
-            }
-            OutputStream outputStream = postConnection.getOutputStream();
-            outputStream.write(postParms.getBytes());
-            outputStream.flush();
-            final StringBuffer buffer = new StringBuffer();
-            int code = postConnection.getResponseCode();
-            if (code == 200) {
-                InputStream inputStream = postConnection.getInputStream();
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-                String line = null;
-                while ((line = bufferedReader.readLine()) != null) {
-                    buffer.append(line);
-                }
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (buffer.length() > 0) {
-                            Log.d(TAG, "Read Respone: " + buffer.toString());
-                        }
-                    }
-                });
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }
