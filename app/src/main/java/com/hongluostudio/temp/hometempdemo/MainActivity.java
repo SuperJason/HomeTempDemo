@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final Timer mTimer = new Timer();
     private StringBuffer mTempShowStrBuf, mTimeShowStrBuf, mDataShowStrBuf, mLogShowStrBuf;
-    private TextView tvTimeShow, tvDataShow, tvTempShow, tvLogShow;
+    private TextView tvTimeShow, tvLogShow;
     private String mTemperatureStr, mHumidityStr;
     private int mUpdateLogCnt = 0;
     private SensorManager mSensorManager;
@@ -77,9 +77,9 @@ public class MainActivity extends AppCompatActivity {
         mTimeShowStrBuf = new StringBuffer();
         mDataShowStrBuf = new StringBuffer();
         tvLogShow = (TextView) findViewById(R.id.tvLogShowId);
-        tvTempShow = (TextView) findViewById(R.id.tvTempShowId);
+        //tvTempShow = (TextView) findViewById(R.id.tvTempShowId);
         tvTimeShow = (TextView) findViewById(R.id.tvTimeShowId);
-        tvDataShow = (TextView) findViewById(R.id.tvDataShowId);
+        //tvDataShow = (TextView) findViewById(R.id.tvDataShowId);
 
         mTimer.schedule(new TimerTask() {
             @Override
@@ -260,7 +260,7 @@ public class MainActivity extends AppCompatActivity {
         //ssTemp.setSpan(new BackgroundColorSpan(Color.YELLOW), 0, ssTemp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ssTemp.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, ssTemp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //粗体
 
-        tvTempShow.setText(ssTemp);
+        //tvTempShow.setText(ssTemp);
 
         SpannableString ssData = new SpannableString(mDataShowStrBuf.toString());
         ssData.setSpan(new TypefaceSpan("sans"), 0, ssData.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -271,7 +271,7 @@ public class MainActivity extends AppCompatActivity {
         //ssData.setSpan(new BackgroundColorSpan(Color.YELLOW), 0, ssData.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ssData.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, ssData.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //粗体
 
-        tvDataShow.setText(ssData);
+        //tvDataShow.setText(ssData);
 
         SpannableString ssTime = new SpannableString(mTimeShowStrBuf.toString());
         ssTime.setSpan(new TypefaceSpan("sans"), 0, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
