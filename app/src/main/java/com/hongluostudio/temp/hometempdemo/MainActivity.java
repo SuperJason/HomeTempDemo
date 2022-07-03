@@ -251,34 +251,12 @@ public class MainActivity extends AppCompatActivity {
         mDataShowStrBuf.delete(0,mDataShowStrBuf.length());
         mDataShowStrBuf.append(fDate.format(date));
 
-        SpannableString ssTemp = new SpannableString(mTempShowStrBuf.toString());
-        ssTemp.setSpan(new TypefaceSpan("sans"), 0, ssTemp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ssTemp.setSpan(new AbsoluteSizeSpan(18,true), 0, ssTemp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        //设置字体大小（相对值,单位：像素） 参数表示为默认字体大小的多少倍
-        ssTemp.setSpan(new RelativeSizeSpan(2.0f), 0, ssTemp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //2.0f表示默认字体大小的两倍
-        ssTemp.setSpan(new ForegroundColorSpan(Color.WHITE), 0, ssTemp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        //ssTemp.setSpan(new BackgroundColorSpan(Color.YELLOW), 0, ssTemp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ssTemp.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, ssTemp.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //粗体
-
-        //tvTempShow.setText(ssTemp);
-
-        SpannableString ssData = new SpannableString(mDataShowStrBuf.toString());
-        ssData.setSpan(new TypefaceSpan("sans"), 0, ssData.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ssData.setSpan(new AbsoluteSizeSpan(36,true), 0, ssData.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        //设置字体大小（相对值,单位：像素） 参数表示为默认字体大小的多少倍
-        //ssData.setSpan(new RelativeSizeSpan(2.0f), 0, ssData.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //2.0f表示默认字体大小的两倍
-        ssData.setSpan(new ForegroundColorSpan(Color.BLACK), 0, ssData.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        //ssData.setSpan(new BackgroundColorSpan(Color.YELLOW), 0, ssData.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ssData.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, ssData.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //粗体
-
-        //tvDataShow.setText(ssData);
-
         SpannableString ssTime = new SpannableString(mTimeShowStrBuf.toString());
         ssTime.setSpan(new TypefaceSpan("sans"), 0, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ssTime.setSpan(new AbsoluteSizeSpan(36,true), 0, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssTime.setSpan(new AbsoluteSizeSpan(40,true), 0, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体大小（相对值,单位：像素） 参数表示为默认字体大小的多少倍
         ssTime.setSpan(new RelativeSizeSpan(6.0f), 0, ssTime.length() - 3, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //2.0f表示默认字体大小的两倍
-        ssTime.setSpan(new ForegroundColorSpan(Color.BLACK), 0, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssTime.setSpan(new ForegroundColorSpan(this.getResources().getColor(R.color.colorTimeFg)), 0, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //ssTime.setSpan(new BackgroundColorSpan(Color.YELLOW), 0, 8, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //ssTime.setSpan(new ForegroundColorSpan(Color.WHITE), ssTime.length()-15, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //ssTime.setSpan(new BackgroundColorSpan(Color.parseColor("#CCCC99")), ssTime.length()-15, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -332,7 +310,7 @@ public class MainActivity extends AppCompatActivity {
         //设置字体大小（绝对值,单位：像素）
         ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体前景色
-        ss.setSpan(new ForegroundColorSpan(Color.WHITE), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new ForegroundColorSpan(this.getResources().getColor(R.color.colorDateFg)), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体背景色
         //ss.setSpan(new BackgroundColorSpan(Color.LTGRAY), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         tvLogShow.setText(ss);
