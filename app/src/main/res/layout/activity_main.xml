@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 1280x800 -->
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -9,35 +10,75 @@
     tools:layout_editor_absoluteY="25dp">
 
     <android.support.constraint.ConstraintLayout
-        android:id="@+id/ConstraintLayoutLeftTop"
+        android:id="@+id/ConstraintLayoutLeft"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@color/colorDateBg"
         android:gravity="center|start"
-        android:scrollbars="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/ConstraintLayoutRight"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <ScrollView
-            android:id="@+id/svLogShow"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/constrintLayoutDate"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
             android:fillViewport="true"
-            android:scrollbars="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0">
 
             <TextView
-                android:id="@+id/tvLogShowId"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical|center_horizontal"
-                android:text="@string/helloworld" />
-        </ScrollView>
+                android:id="@+id/tvSunarDataShow"
+                android:layout_width="0dp"
+                android:layout_height="250px"
+                android:gravity="bottom|center_horizontal"
+                android:text="@string/helloworld"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvWeekDataShow"
+                android:layout_width="0dp"
+                android:layout_height="200px"
+                android:gravity="center_horizontal|top"
+                android:text="@string/helloworld"
+                app:layout_constraintBottom_toTopOf="@+id/tvLunarDataShow"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.50"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvSunarDataShow" />
+
+            <TextView
+                android:id="@+id/tvLunarDataShow"
+                android:layout_width="0dp"
+                android:layout_height="200px"
+                android:gravity="center"
+                android:text="@string/helloworld"
+                app:layout_constraintBottom_toTopOf="@+id/tvTemHumiDateShow"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.50"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvWeekDataShow" />
+
+            <TextView
+                android:id="@+id/tvTemHumiDateShow"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:gravity="center"
+                android:text="@string/helloworld"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.50"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvLunarDataShow" />
+        </android.support.constraint.ConstraintLayout>
 
     </android.support.constraint.ConstraintLayout>
 
@@ -48,13 +89,13 @@
         android:gravity="center|end"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/ConstraintLayoutLeftTop"
+        app:layout_constraintStart_toEndOf="@+id/ConstraintLayoutLeft"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.0">
 
         <android.support.constraint.ConstraintLayout
             android:id="@+id/constraintLayoutTime"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="0dp"
             android:background="@color/colorTimeBg"
             app:layout_constraintBottom_toBottomOf="parent"

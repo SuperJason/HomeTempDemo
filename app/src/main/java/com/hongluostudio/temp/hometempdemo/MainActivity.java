@@ -1,13 +1,11 @@
 package com.hongluostudio.temp.hometempdemo;
 
-import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Looper;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -22,21 +20,14 @@ import android.text.style.TypefaceSpan;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.math.BigDecimal;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -50,8 +41,6 @@ public class MainActivity extends AppCompatActivity {
     protected final int AFTER_TOUCH_SCREENON_CNT_MAX = 9;
 
     private final Timer mTimer = new Timer();
-    private StringBuffer mTempShowStrBuf, mTimeShowStrBuf, mDataShowStrBuf, mLogShowStrBuf;
-    private TextView tvTimeShow, tvLogShow;
     private String mTemperatureStr, mHumidityStr;
     private int mUpdateLogCnt = 0;
     private SensorManager mSensorManager;
@@ -63,7 +52,6 @@ public class MainActivity extends AppCompatActivity {
     private int mBrightnessDebounceCnt = 0;
 
     private int mScreenOnCnt = 0;
-    private int mLogLineLength = 36;
 
     private HandlerThread mHttpHandlerThread;
 
@@ -71,15 +59,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        mLogShowStrBuf = new StringBuffer();
-        mTempShowStrBuf = new StringBuffer();
-        mTimeShowStrBuf = new StringBuffer();
-        mDataShowStrBuf = new StringBuffer();
-        tvLogShow = (TextView) findViewById(R.id.tvLogShowId);
-        //tvTempShow = (TextView) findViewById(R.id.tvTempShowId);
-        tvTimeShow = (TextView) findViewById(R.id.tvTimeShowId);
-        //tvDataShow = (TextView) findViewById(R.id.tvDataShowId);
 
         mTimer.schedule(new TimerTask() {
             @Override
@@ -238,87 +217,85 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private int updateShow() {
+        SpannableString ss;
+        TextView tv;
+        StringBuffer strBuf = new StringBuffer();
         Date date = new Date();
-        SimpleDateFormat fTime = new SimpleDateFormat("HH:mm ss", Locale.CHINESE);
-        SimpleDateFormat fDate = new SimpleDateFormat("yyyy年MM月dd日 EEEE", Locale.CHINESE);
 
-        mTempShowStrBuf.delete(0, mTempShowStrBuf.length());
-        mTempShowStrBuf.append(" 温度: " + mTemperatureStr + " 湿度: " + mHumidityStr);
+        // 公历
+        SimpleDateFormat sunarDate = new SimpleDateFormat("yyyy年MM月dd日", Locale.CHINESE);
+        strBuf.delete(0, strBuf.length());
+        strBuf.append(sunarDate.format(date));
+        ss = new SpannableString(strBuf.toString());
+        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // 通过变大的手法强调日期
+        ss.setSpan(new RelativeSizeSpan(3.0f), ss.length() - 3, ss.length() - 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new ForegroundColorSpan(this.getResources().getColor(R.color.colorDateFg)), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        tv = (TextView) findViewById(R.id.tvSunarDataShow);
+        tv.setText(ss);
 
-        mTimeShowStrBuf.delete(0,mTimeShowStrBuf.length());
-        mTimeShowStrBuf.append(fTime.format(date));
+        // 星期
+        SimpleDateFormat weekDate = new SimpleDateFormat("EEEE", Locale.CHINESE);
+        strBuf.delete(0, strBuf.length());
+        strBuf.append("星期" + weekDate.format(date).substring(2));
+        ss = new SpannableString(strBuf.toString());
+        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // 通过变大的手法强调星期
+        ss.setSpan(new RelativeSizeSpan(3.0f), ss.length() - 1, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new ForegroundColorSpan(this.getResources().getColor(R.color.colorDateFg)), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        //ss.setSpan(new BackgroundColorSpan(this.getResources().getColor(R.color.colorTimeBg)), ss.length() - 1, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        tv = (TextView) findViewById(R.id.tvWeekDataShow);
+        tv.setText(ss);
 
-        mDataShowStrBuf.delete(0,mDataShowStrBuf.length());
-        mDataShowStrBuf.append(fDate.format(date));
+        // 农历
+        strBuf.delete(0, strBuf.length());
+        int yyyy = Integer.valueOf(new SimpleDateFormat("yyyy", Locale.CHINESE).format(date)).intValue();
+        int MM = Integer.valueOf(new SimpleDateFormat("MM", Locale.CHINESE).format(date)).intValue();
+        int dd = Integer.valueOf(new SimpleDateFormat("dd", Locale.CHINESE).format(date)).intValue();
+        strBuf.append(LunarUtils.getLunar(yyyy, MM, dd));
+        ss = new SpannableString(strBuf.toString());
+        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // 通过变大的手法强调日期
+        ss.setSpan(new RelativeSizeSpan(3.0f), ss.length() - 2, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new ForegroundColorSpan(this.getResources().getColor(R.color.colorDateFg)), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        tv = (TextView) findViewById(R.id.tvLunarDataShow);
+        tv.setText(ss);
 
-        SpannableString ssTime = new SpannableString(mTimeShowStrBuf.toString());
-        ssTime.setSpan(new TypefaceSpan("sans"), 0, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ssTime.setSpan(new AbsoluteSizeSpan(40,true), 0, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // 温湿度
+        strBuf.delete(0, strBuf.length());
+        strBuf.append(" 温度: " + mTemperatureStr + "\n湿度: " + mHumidityStr);
+        ss = new SpannableString(strBuf.toString());
+        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new ForegroundColorSpan(this.getResources().getColor(R.color.colorDateFg)), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        tv = (TextView) findViewById(R.id.tvTemHumiDateShow);
+        tv.setText(ss);
+
+        // 时间
+        SimpleDateFormat tTime = new SimpleDateFormat("HH:mm s", Locale.CHINESE);
+        strBuf.delete(0, strBuf.length());
+        strBuf.append(tTime.format(date));
+        ss = new SpannableString(strBuf.toString());
+        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new AbsoluteSizeSpan(60,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体大小（相对值,单位：像素） 参数表示为默认字体大小的多少倍
-        ssTime.setSpan(new RelativeSizeSpan(6.0f), 0, ssTime.length() - 3, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //2.0f表示默认字体大小的两倍
-        ssTime.setSpan(new ForegroundColorSpan(this.getResources().getColor(R.color.colorTimeFg)), 0, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new RelativeSizeSpan(4.0f), 0, 5, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //2.0f表示默认字体大小的两倍
+        ss.setSpan(new ForegroundColorSpan(this.getResources().getColor(R.color.colorTimeFg)), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //粗体
+        tv = (TextView) findViewById(R.id.tvTimeShowId);
+        tv.setText(ss);
+
         //ssTime.setSpan(new BackgroundColorSpan(Color.YELLOW), 0, 8, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //ssTime.setSpan(new ForegroundColorSpan(Color.WHITE), ssTime.length()-15, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //ssTime.setSpan(new BackgroundColorSpan(Color.parseColor("#CCCC99")), ssTime.length()-15, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ssTime.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, ssTime.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //粗体
-
-        tvTimeShow.setText(ssTime);
 
         return 0;
     }
 
     private int updateLogData() {
-        Date date = new Date();
-        SimpleDateFormat ft = new SimpleDateFormat("MM-dd HH:mm");
-
-        if (mLogShowStrBuf.length() >= mLogLineLength * 3 * 24 * 12) {// 5分钟一次数据的情况下，保存3天的数据
-            String str = mLogShowStrBuf.substring(mLogLineLength, mLogShowStrBuf.length());
-            mLogShowStrBuf.delete(0, mLogShowStrBuf.length());
-            mLogShowStrBuf.append(str);
-        }
-        mLogShowStrBuf.append(ft.format(date));
-        mLogShowStrBuf.append(" " + mTemperatureStr);
-        mLogShowStrBuf.append(" " + mHumidityStr);
-
-        mLogShowStrBuf.delete(0, mLogShowStrBuf.length());
-        // 公历
-        //mLogShowStrBuf.append("公历: \n");
-        //SimpleDateFormat fDate = new SimpleDateFormat("yyyy年MM月dd日 EEEE", Locale.CHINESE);
-        SimpleDateFormat fDate = new SimpleDateFormat("yyyy年MM月dd日", Locale.CHINESE);
-        mLogShowStrBuf.append(fDate.format(date) + "\n");
-        fDate = new SimpleDateFormat("EEEE", Locale.CHINESE);
-        mLogShowStrBuf.append(fDate.format(date));
-        mLogShowStrBuf.append("\n\n");
-
-        // 农历
-        //mLogShowStrBuf.append("农历: \n");
-        mLogShowStrBuf.append(LunarUtils.getLunar(2022, 7, 3));
-
-        // 温湿度
-        mLogShowStrBuf.append("\n\n");
-        mLogShowStrBuf.append(" 温度: " + mTemperatureStr + "\n");
-        mLogShowStrBuf.append(" 湿度: " + mHumidityStr);
-
-        mLogShowStrBuf.append("\n");
-        mLogLineLength = mLogShowStrBuf.length();
-        //Log.d(TAG, "mLogShowStrBuf length: " + mLogShowStrBuf.length() + "\n");
-
-        SpannableString ss = new SpannableString(mLogShowStrBuf.toString());
-        // https://blog.csdn.net/pcaxb/article/details/47341249
-        //设置字体(default,default-bold,monospace,serif,sans-serif)
-        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        //设置字体大小（绝对值,单位：像素）
-        ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        //设置字体前景色
-        ss.setSpan(new ForegroundColorSpan(this.getResources().getColor(R.color.colorDateFg)), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        //设置字体背景色
-        //ss.setSpan(new BackgroundColorSpan(Color.LTGRAY), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        tvLogShow.setText(ss);
-
-        // Update ScrollView
-        ScrollView mScrollView = (ScrollView) findViewById(R.id.svLogShow);
-        mScrollView.smoothScrollTo(0, tvLogShow.getBottom());
-
         return 0;
     }
 
