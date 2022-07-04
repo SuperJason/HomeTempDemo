@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:keepScreenOn="true"
+    android:background="@color/colorDateBg"
     tools:context=".MainActivity"
     tools:layout_editor_absoluteY="25dp">
 
@@ -12,7 +13,7 @@
         android:id="@+id/ConstraintLayoutLeftTop"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@color/colorDateBg"
+        android:background="@drawable/shape_10dp_corners"
         android:gravity="center|start"
         android:scrollbars="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -56,7 +57,7 @@
             android:id="@+id/constraintLayoutTime"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:background="@color/colorTimeBg"
+            android:background="@drawable/shape_10dp_corners"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
