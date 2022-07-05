@@ -5,14 +5,12 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.AbsoluteSizeSpan;
-import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
@@ -20,7 +18,6 @@ import android.text.style.TypefaceSpan;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.io.BufferedWriter;
@@ -53,8 +50,6 @@ public class MainActivity extends AppCompatActivity {
 
     private int mScreenOnCnt = 0;
 
-    private HandlerThread mHttpHandlerThread;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,9 +78,6 @@ public class MainActivity extends AppCompatActivity {
             mSensorManager.registerListener(new LightSensorListener(), mLightSensor, SensorManager.SENSOR_DELAY_NORMAL);
         else
             Log.e(TAG, "mLightSensor is null!\n");
-
-        mHttpHandlerThread = new HandlerThread("http");
-        mHttpHandlerThread.start();
     }
 
     @Override
