@@ -1,11 +1,13 @@
 package com.hongluostudio.temp.hometempdemo;
 
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.Message;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -50,10 +52,49 @@ public class MainActivity extends AppCompatActivity {
 
     private int mScreenOnCnt = 0;
 
+    private int colorDateBg = 0;
+    private int colorTimeBg = 0;
+    private int colorTimeFg = -1;
+    private int colorDateFg = -1;
+
+    private int colorSolutionIndex = 0;
+    private String[][] colorSolutionArry = {
+            /* Date Backgroud,    Time Backgroud,    Time Frontgroud,    Date Frontgroud */
+            {  "#779649",         "#D3CBC5",         "#779649",          "#FFFFFF"}, /* 白羊座|绿色 */
+            /*  碧山,               藕丝秋半  */
+            {  "#DA4268",         "#F3BCA7",         "#DA4268",          "#FFFFFF"}, /* 金牛座|桃红 */
+            /*  桃红,               豆沙  */
+            {  "#06436F",         "#DDB078",         "#06436F",          "#FFFFFF"}, /* 双子座|蓝色 */
+            /*  蓝采和,             九斤黄  */
+            {  "#F2C867",         "#6C945C",         "#F2C867",          "#6C945C"}, /* 巨蟹座|黄色 */
+            /*  嫩鹅黄,             庭芜绿  */
+            {  "#EA5514",         "#B2B6B6",         "#EA5514",          "#FFFFFF"}, /* 狮子座|橘色 */
+            /*  黄丹,               月魄  */
+            {  "#ABD5E1",         "#CFE3D7",         "#ABD5E1",          "#FFFFFF"}, /* 处女座|水蓝 */
+            /*  碧落,               湖绿  */
+            {  "#A2191B",         "#0A2456",         "#A2191B",          "#FFFFFF"}, /* 天秤座|红色 */
+            /*  朱樱,               骐驎  */
+            {  "#F9D3E3",         "#88ABDA",         "#F9D3E3",          "#88ABDA"}, /* 天蝎座|粉色 */
+            /*  盈盈,               窃蓝  */
+            {  "#BC836B",         "#007175",         "#BC836B",          "#FFFFFF"}, /* 射手座|咖色 */
+            /*  紫磨金,             青雘  */
+            {  "#FFEE6F",         "#5AA4AE",         "#FFEE6F",          "#5AA4AE"}, /* 摩羯座|黄色  */
+            /*  黄栗留,             天水碧  */
+            {  "#7C5B3E",         "#DDBB99",         "#7C5B3E",          "#FFFFFF"}, /* 水瓶座|咖色 */
+            /*  骆驼褐,             如梦令  */
+            {  "#422256",         "#B81A35",         "#FFFFFF",          "#FFFFFF"}, /* 双鱼座|蓝紫 */
+            /*  凝夜紫,             朱孔阳  */
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        colorDateBg = this.getResources().getColor(R.color.colorDateBg);
+        colorTimeBg = this.getResources().getColor(R.color.colorTimeBg);
+        colorTimeFg = this.getResources().getColor(R.color.colorTimeFg);
+        colorDateFg = this.getResources().getColor(R.color.colorDateFg);
 
         mTimer.schedule(new TimerTask() {
             @Override
@@ -89,9 +130,16 @@ public class MainActivity extends AppCompatActivity {
                 //Log.d(TAG,"Action was DOWN");
             case (MotionEvent.ACTION_MOVE) :
                 //Log.d(TAG,"Action was MOVE");
+                mScreenOnCnt = AFTER_TOUCH_SCREENON_CNT_MAX;
+                return true;
             case (MotionEvent.ACTION_UP) :
                 //Log.d(TAG,"Action was UP");
                 mScreenOnCnt = AFTER_TOUCH_SCREENON_CNT_MAX;
+                updateColorSolution();
+                colorSolutionIndex++;
+                if (colorSolutionIndex >= colorSolutionArry.length) {
+                    colorSolutionIndex = 0;
+                }
                 return true;
             default :
                 return super.onTouchEvent(event);
@@ -157,8 +205,12 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             getTemperatureHumidity();
-            if (mUpdateLogCnt > 3/*3600*/ || mUpdateLogCnt == 0) { // 1小时更新一次数据
-                updateLogData();
+            if (mUpdateLogCnt > 300/*3600*/ || mUpdateLogCnt == 0) { // 1小时更新一次数据
+                updateColorSolution();
+                colorSolutionIndex++;
+                if (colorSolutionIndex >= colorSolutionArry.length) {
+                    colorSolutionIndex = 0;
+                }
                 mUpdateLogCnt = 1;
             }
             
@@ -223,7 +275,7 @@ public class MainActivity extends AppCompatActivity {
         ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         // 通过变大的手法强调日期
         ss.setSpan(new RelativeSizeSpan(3.0f), ss.length() - 3, ss.length() - 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ss.setSpan(new ForegroundColorSpan(this.getResources().getColor(R.color.colorDateFg)), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new ForegroundColorSpan(colorDateFg), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         tv = (TextView) findViewById(R.id.tvSunarDataShow);
         tv.setText(ss);
 
@@ -236,7 +288,7 @@ public class MainActivity extends AppCompatActivity {
         ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         // 通过变大的手法强调星期
         ss.setSpan(new RelativeSizeSpan(3.0f), ss.length() - 1, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ss.setSpan(new ForegroundColorSpan(this.getResources().getColor(R.color.colorDateFg)), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new ForegroundColorSpan(colorDateFg), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //ss.setSpan(new BackgroundColorSpan(this.getResources().getColor(R.color.colorTimeBg)), ss.length() - 1, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         tv = (TextView) findViewById(R.id.tvWeekDataShow);
         tv.setText(ss);
@@ -252,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
         ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         // 通过变大的手法强调日期
         ss.setSpan(new RelativeSizeSpan(3.0f), ss.length() - 2, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ss.setSpan(new ForegroundColorSpan(this.getResources().getColor(R.color.colorDateFg)), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new ForegroundColorSpan(colorDateFg), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         tv = (TextView) findViewById(R.id.tvLunarDataShow);
         tv.setText(ss);
 
@@ -262,7 +314,7 @@ public class MainActivity extends AppCompatActivity {
         ss = new SpannableString(strBuf.toString());
         ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ss.setSpan(new ForegroundColorSpan(this.getResources().getColor(R.color.colorDateFg)), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new ForegroundColorSpan(colorDateFg), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         tv = (TextView) findViewById(R.id.tvTemHumiDateShow);
         tv.setText(ss);
 
@@ -275,7 +327,7 @@ public class MainActivity extends AppCompatActivity {
         ss.setSpan(new AbsoluteSizeSpan(60,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体大小（相对值,单位：像素） 参数表示为默认字体大小的多少倍
         ss.setSpan(new RelativeSizeSpan(4.0f), 0, 5, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //2.0f表示默认字体大小的两倍
-        ss.setSpan(new ForegroundColorSpan(this.getResources().getColor(R.color.colorTimeFg)), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new ForegroundColorSpan(colorTimeFg), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //粗体
         tv = (TextView) findViewById(R.id.tvTimeShowId);
         tv.setText(ss);
@@ -287,8 +339,22 @@ public class MainActivity extends AppCompatActivity {
         return 0;
     }
 
-    private int updateLogData() {
-        return 0;
+    private void updateColorSolution() {
+        Log.d(TAG, "colorSolutionArry[" + colorSolutionIndex + "][0]: " + colorSolutionArry[colorSolutionIndex][0]);
+        colorDateBg = Color.parseColor(colorSolutionArry[colorSolutionIndex][0]);
+        Log.d(TAG, "colorSolutionArry[" + colorSolutionIndex + "][1]: " + colorSolutionArry[colorSolutionIndex][1]);
+        colorTimeBg = Color.parseColor(colorSolutionArry[colorSolutionIndex][1]);
+        Log.d(TAG, "colorSolutionArry[" + colorSolutionIndex + "][2]: " + colorSolutionArry[colorSolutionIndex][2]);
+        colorTimeFg = Color.parseColor(colorSolutionArry[colorSolutionIndex][2]);
+        Log.d(TAG, "colorSolutionArry[" + colorSolutionIndex + "][3]: " + colorSolutionArry[colorSolutionIndex][3]);
+        colorDateFg = Color.parseColor(colorSolutionArry[colorSolutionIndex][3]);
+
+        ConstraintLayout layoutDate = (ConstraintLayout)findViewById(R.id.ConstraintLayoutLeft);
+        ConstraintLayout layoutTime = (ConstraintLayout)findViewById(R.id.ConstraintLayoutRight);
+
+        layoutDate.setBackgroundColor(colorDateBg);
+        layoutTime.setBackgroundColor(colorTimeBg);
+        updateShow();
     }
 
     private int debounceBrightnessSetting() {

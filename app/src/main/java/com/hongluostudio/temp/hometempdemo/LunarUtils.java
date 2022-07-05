@@ -194,8 +194,8 @@ public class LunarUtils {
         LunarUtils lunar = new LunarUtils();
         lunar.Lunar(currentDay);
         String currentDate = lunar.toString();
-        Log.d("LunarUtils", "currentDate: " + currentDate + "\n");
-        Log.d("LunarUtils", "cyclical: " + lunar.cyclical() + "\n");
+        //Log.d("LunarUtils", "currentDate: " + currentDate + "\n");
+        //Log.d("LunarUtils", "cyclical: " + lunar.cyclical() + "\n");
         return lunar.cyclical() + "年" + currentDate.substring(currentDate.indexOf("年")+1);
     }
 }
