@@ -1,6 +1,7 @@
 package com.hongluostudio.temp.hometempdemo;
 
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -279,8 +280,9 @@ public class MainActivity extends AppCompatActivity {
         ss = new SpannableString(strBuf.toString());
         ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        // 通过变大的手法强调日期
+        // 通过增大加粗强调日期
         ss.setSpan(new RelativeSizeSpan(3.0f), ss.length() - 3, ss.length() - 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new StyleSpan(Typeface.BOLD), ss.length() - 3, ss.length() - 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new ForegroundColorSpan(colorDateFg), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         tv = (TextView) findViewById(R.id.tvSunarDataShow);
         tv.setText(ss);
@@ -292,8 +294,9 @@ public class MainActivity extends AppCompatActivity {
         ss = new SpannableString(strBuf.toString());
         ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        // 通过变大的手法强调星期
+        // 通过增大加粗强调星期
         ss.setSpan(new RelativeSizeSpan(3.0f), ss.length() - 1, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new StyleSpan(Typeface.BOLD), ss.length() - 1, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new ForegroundColorSpan(colorDateFg), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //ss.setSpan(new BackgroundColorSpan(this.getResources().getColor(R.color.colorTimeBg)), ss.length() - 1, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         tv = (TextView) findViewById(R.id.tvWeekDataShow);
@@ -308,8 +311,9 @@ public class MainActivity extends AppCompatActivity {
         ss = new SpannableString(strBuf.toString());
         ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        // 通过变大的手法强调日期
+        // 通过增大加粗强调日期
         ss.setSpan(new RelativeSizeSpan(3.0f), ss.length() - 2, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new StyleSpan(Typeface.BOLD), ss.length() - 2, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new ForegroundColorSpan(colorDateFg), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         tv = (TextView) findViewById(R.id.tvLunarDataShow);
         tv.setText(ss);
@@ -320,6 +324,8 @@ public class MainActivity extends AppCompatActivity {
         ss = new SpannableString(strBuf.toString());
         ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new StyleSpan(Typeface.BOLD), ss.length() - 15, ss.length() - 11 , Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new StyleSpan(Typeface.BOLD), ss.length() - 5, ss.length() - 1 , Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new ForegroundColorSpan(colorDateFg), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         tv = (TextView) findViewById(R.id.tvTemHumiDateShow);
         tv.setText(ss);
