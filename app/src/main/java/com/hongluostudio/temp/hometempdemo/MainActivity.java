@@ -224,7 +224,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             getTemperatureHumidity();
-            if (mUpdateLogCnt > 300/*3600*/ || mUpdateLogCnt == 0) { // 1小时更新一次数据
+            if (mUpdateLogCnt > 720/*3600*/ || mUpdateLogCnt == 0) { // 1小时更新一次数据
                 updateColorSolution();
                 colorSolutionIndex++;
                 if (colorSolutionIndex >= colorSolutionArry.length) {
@@ -286,14 +286,14 @@ public class MainActivity extends AppCompatActivity {
         Date date = new Date();
 
         // 公历
-        SimpleDateFormat sunarDate = new SimpleDateFormat("yyyy年MM月dd日", Locale.CHINESE);
+        SimpleDateFormat sunarDate = new SimpleDateFormat("yyyy年M月\nd日", Locale.CHINESE);
         strBuf.delete(0, strBuf.length());
         strBuf.append(sunarDate.format(date));
         ss = new SpannableString(strBuf.toString());
         ss.setSpan(new CustomTypefaceSpan("sans", dateTypeface), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         // 通过增大加粗强调日期
-        ss.setSpan(new RelativeSizeSpan(3.0f), ss.length() - 3, ss.length() - 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new RelativeSizeSpan(3.5f), ss.length() - 3, ss.length() - 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new StyleSpan(Typeface.BOLD), ss.length() - 3, ss.length() - 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new ForegroundColorSpan(colorDateFg), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         tv = (TextView) findViewById(R.id.tvSunarDataShow);
@@ -348,7 +348,7 @@ public class MainActivity extends AppCompatActivity {
         strBuf.append(tTime.format(date));
         ss = new SpannableString(strBuf.toString());
         ss.setSpan(new CustomTypefaceSpan("sans", timeTypeface), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ss.setSpan(new AbsoluteSizeSpan(60,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new AbsoluteSizeSpan(54,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体大小（相对值,单位：像素） 参数表示为默认字体大小的多少倍
         ss.setSpan(new RelativeSizeSpan(4.0f), 0, 5, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //2.0f表示默认字体大小的两倍
         ss.setSpan(new ForegroundColorSpan(colorTimeFg), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
