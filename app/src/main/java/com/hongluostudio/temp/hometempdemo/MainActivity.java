@@ -1,6 +1,7 @@
 package com.hongluostudio.temp.hometempdemo;
 
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -9,10 +10,12 @@ import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.Message;
 import android.support.constraint.ConstraintLayout;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextPaint;
 import android.text.style.AbsoluteSizeSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
@@ -58,6 +61,9 @@ public class MainActivity extends AppCompatActivity {
     private int mBrightnessDebounceCnt = 0;
 
     private int mScreenOnCnt = 0;
+
+    private Typeface dateTypeface;
+    private Typeface timeTypeface;
 
     private int colorDateBg = 0;
     private int colorTimeBg = 0;
@@ -129,6 +135,12 @@ public class MainActivity extends AppCompatActivity {
 
         demoGestureDetector = new DemoGestureDetector();
         gestureDetector=new GestureDetector(this,demoGestureDetector);
+
+        dateTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_zcool_kuai_le_regular), Typeface.NORMAL);
+        //dateTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_long_cang_regular), Typeface.NORMAL);
+        timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_fugaz_one_regular), Typeface.NORMAL);
+        //timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_russo_one_regular), Typeface.NORMAL);
+        //timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_stick_no_bills_bold), Typeface.NORMAL);
     }
 
     @Override
@@ -278,7 +290,7 @@ public class MainActivity extends AppCompatActivity {
         strBuf.delete(0, strBuf.length());
         strBuf.append(sunarDate.format(date));
         ss = new SpannableString(strBuf.toString());
-        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new CustomTypefaceSpan("sans", dateTypeface), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         // 通过增大加粗强调日期
         ss.setSpan(new RelativeSizeSpan(3.0f), ss.length() - 3, ss.length() - 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -292,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
         strBuf.delete(0, strBuf.length());
         strBuf.append("星期" + weekDate.format(date).substring(2));
         ss = new SpannableString(strBuf.toString());
-        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new CustomTypefaceSpan("sans", dateTypeface), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         // 通过增大加粗强调星期
         ss.setSpan(new RelativeSizeSpan(3.0f), ss.length() - 1, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -309,7 +321,7 @@ public class MainActivity extends AppCompatActivity {
         int dd = Integer.valueOf(new SimpleDateFormat("dd", Locale.CHINESE).format(date)).intValue();
         strBuf.append(LunarUtils.getLunar(yyyy, MM, dd));
         ss = new SpannableString(strBuf.toString());
-        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new CustomTypefaceSpan("sans", dateTypeface), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         // 通过增大加粗强调日期
         ss.setSpan(new RelativeSizeSpan(3.0f), ss.length() - 2, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -322,7 +334,7 @@ public class MainActivity extends AppCompatActivity {
         strBuf.delete(0, strBuf.length());
         strBuf.append(" 温度: " + mTemperatureStr + "\n湿度: " + mHumidityStr);
         ss = new SpannableString(strBuf.toString());
-        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new CustomTypefaceSpan("sans", dateTypeface), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new StyleSpan(Typeface.BOLD), ss.length() - 15, ss.length() - 11 , Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new StyleSpan(Typeface.BOLD), ss.length() - 5, ss.length() - 1 , Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -331,16 +343,16 @@ public class MainActivity extends AppCompatActivity {
         tv.setText(ss);
 
         // 时间
-        SimpleDateFormat tTime = new SimpleDateFormat("HH:mm s", Locale.CHINESE);
+        SimpleDateFormat tTime = new SimpleDateFormat("HH:mm\ns", Locale.CHINESE);
         strBuf.delete(0, strBuf.length());
         strBuf.append(tTime.format(date));
         ss = new SpannableString(strBuf.toString());
-        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new CustomTypefaceSpan("sans", timeTypeface), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ss.setSpan(new AbsoluteSizeSpan(60,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体大小（相对值,单位：像素） 参数表示为默认字体大小的多少倍
         ss.setSpan(new RelativeSizeSpan(4.0f), 0, 5, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //2.0f表示默认字体大小的两倍
         ss.setSpan(new ForegroundColorSpan(colorTimeFg), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ss.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //粗体
+        //ss.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  //粗体
         tv = (TextView) findViewById(R.id.tvTimeShowId);
         tv.setText(ss);
 
@@ -419,6 +431,29 @@ public class MainActivity extends AppCompatActivity {
                 updateColorSolution();
             }
             return true;
+        }
+    }
+
+    public class CustomTypefaceSpan extends TypefaceSpan {
+        private final Typeface newType;
+
+        public CustomTypefaceSpan(String family, Typeface type) {
+            super(family);
+            newType = type;
+        }
+
+        @Override
+        public void updateDrawState(TextPaint ds) {
+            applyCustomTypeFace(ds, newType);
+        }
+
+        @Override
+        public void updateMeasureState(TextPaint paint) {
+            applyCustomTypeFace(paint, newType);
+        }
+
+        private void applyCustomTypeFace(Paint paint, Typeface tf) {
+            paint.setTypeface(tf);
         }
     }
 }
