@@ -18,9 +18,11 @@ import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
@@ -38,12 +40,16 @@ public class MainActivity extends AppCompatActivity {
     protected final String TAG = getClass().getSimpleName();
     protected final int BRIGHTNESS_CHANGE_DELAY_CNT_MAX = 9;
     protected final int AFTER_TOUCH_SCREENON_CNT_MAX = 9;
+    private static final int MIN_DISTANCE = 100;
 
     private final Timer mTimer = new Timer();
     private String mTemperatureStr, mHumidityStr;
     private int mUpdateLogCnt = 0;
     private SensorManager mSensorManager;
     private Sensor mLightSensor;
+
+    private GestureDetector gestureDetector;
+    private DemoGestureDetector demoGestureDetector;
 
     private int mSetBrightnessInt = 120;
     private int mOldSetBrightnessInt = 120;
@@ -59,30 +65,30 @@ public class MainActivity extends AppCompatActivity {
 
     private int colorSolutionIndex = 0;
     private String[][] colorSolutionArry = {
-            /* Date Backgroud,    Time Backgroud,    Time Frontgroud,    Date Frontgroud */
-            {  "#779649",         "#D3CBC5",         "#779649",          "#FFFFFF"}, /* 白羊座|绿色 */
+            /* Date Backgroud,    Time Backgroud,    Time Frontgroud,    Date Frontgroud,    Name  */
+            {  "#779649",         "#D3CBC5",         "#779649",          "#D3CBC5",          "白羊座|绿色"}, /* 白羊座|绿色 */
             /*  碧山,               藕丝秋半  */
-            {  "#DA4268",         "#F3BCA7",         "#DA4268",          "#FFFFFF"}, /* 金牛座|桃红 */
+            {  "#DA4268",         "#F3BCA7",         "#DA4268",          "#F3BCA7",          "金牛座|桃红"}, /* 金牛座|桃红 */
             /*  桃红,               豆沙  */
-            {  "#06436F",         "#DDB078",         "#06436F",          "#FFFFFF"}, /* 双子座|蓝色 */
+            {  "#06436F",         "#DDB078",         "#06436F",          "#DDB078",          "双子座|蓝色"}, /* 双子座|蓝色 */
             /*  蓝采和,             九斤黄  */
-            {  "#F2C867",         "#6C945C",         "#F2C867",          "#6C945C"}, /* 巨蟹座|黄色 */
+            {  "#F2C867",         "#6C945C",         "#F2C867",          "#6C945C",          "巨蟹座|黄色"}, /* 巨蟹座|黄色 */
             /*  嫩鹅黄,             庭芜绿  */
-            {  "#EA5514",         "#B2B6B6",         "#EA5514",          "#FFFFFF"}, /* 狮子座|橘色 */
+            {  "#EA5514",         "#B2B6B6",         "#EA5514",          "#B2B6B6",          "狮子座|橘色"}, /* 狮子座|橘色 */
             /*  黄丹,               月魄  */
-            {  "#ABD5E1",         "#CFE3D7",         "#ABD5E1",          "#FFFFFF"}, /* 处女座|水蓝 */
+            {  "#ABD5E1",         "#CFE3D7",         "#000000",          "#000000",          "处女座|水蓝"}, /* 处女座|水蓝 */
             /*  碧落,               湖绿  */
-            {  "#A2191B",         "#0A2456",         "#A2191B",          "#FFFFFF"}, /* 天秤座|红色 */
+            {  "#A2191B",         "#0A2456",         "#FFFFFF",          "#FFFFFF",          "天秤座|红色"}, /* 天秤座|红色 */
             /*  朱樱,               骐驎  */
-            {  "#F9D3E3",         "#88ABDA",         "#F9D3E3",          "#88ABDA"}, /* 天蝎座|粉色 */
+            {  "#F9D3E3",         "#88ABDA",         "#F9D3E3",          "#88ABDA",          "天蝎座|粉色"}, /* 天蝎座|粉色 */
             /*  盈盈,               窃蓝  */
-            {  "#BC836B",         "#007175",         "#BC836B",          "#FFFFFF"}, /* 射手座|咖色 */
+            {  "#BC836B",         "#007175",         "#BC836B",          "#007175",          "射手座|咖色"}, /* 射手座|咖色 */
             /*  紫磨金,             青雘  */
-            {  "#FFEE6F",         "#5AA4AE",         "#FFEE6F",          "#5AA4AE"}, /* 摩羯座|黄色  */
+            {  "#FFEE6F",         "#5AA4AE",         "#FFEE6F",          "#5AA4AE",          "摩羯座|黄色"}, /* 摩羯座|黄色  */
             /*  黄栗留,             天水碧  */
-            {  "#7C5B3E",         "#DDBB99",         "#7C5B3E",          "#FFFFFF"}, /* 水瓶座|咖色 */
+            {  "#7C5B3E",         "#DDBB99",         "#7C5B3E",          "#DDBB99",          "水瓶座|咖色"}, /* 水瓶座|咖色 */
             /*  骆驼褐,             如梦令  */
-            {  "#422256",         "#B81A35",         "#FFFFFF",          "#FFFFFF"}, /* 双鱼座|蓝紫 */
+            {  "#422256",         "#B81A35",         "#FFFFFF",          "#FFFFFF",          "双鱼座|蓝紫"}, /* 双鱼座|蓝紫 */
             /*  凝夜紫,             朱孔阳  */
     };
 
@@ -119,31 +125,31 @@ public class MainActivity extends AppCompatActivity {
             mSensorManager.registerListener(new LightSensorListener(), mLightSensor, SensorManager.SENSOR_DELAY_NORMAL);
         else
             Log.e(TAG, "mLightSensor is null!\n");
+
+        demoGestureDetector = new DemoGestureDetector();
+        gestureDetector=new GestureDetector(this,demoGestureDetector);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         int action = event.getAction();
         Log.d(TAG, "onTouchEvent: " + action + "\n");
+
+        gestureDetector.onTouchEvent(event);
+
         switch(action) {
             case (MotionEvent.ACTION_DOWN) :
                 //Log.d(TAG,"Action was DOWN");
             case (MotionEvent.ACTION_MOVE) :
                 //Log.d(TAG,"Action was MOVE");
-                mScreenOnCnt = AFTER_TOUCH_SCREENON_CNT_MAX;
-                return true;
             case (MotionEvent.ACTION_UP) :
                 //Log.d(TAG,"Action was UP");
                 mScreenOnCnt = AFTER_TOUCH_SCREENON_CNT_MAX;
-                updateColorSolution();
-                colorSolutionIndex++;
-                if (colorSolutionIndex >= colorSolutionArry.length) {
-                    colorSolutionIndex = 0;
-                }
                 return true;
             default :
                 return super.onTouchEvent(event);
         }
+
     }
 
     public class LightSensorListener implements SensorEventListener {
@@ -379,5 +385,34 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return 0;
+    }
+
+    class DemoGestureDetector extends GestureDetector.SimpleOnGestureListener{
+
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            if(e1.getX()-e2.getX()>MIN_DISTANCE){
+                Toast.makeText(MainActivity.this,"左滑", Toast.LENGTH_SHORT).show();
+            }else if(e2.getX()-e1.getX()>MIN_DISTANCE){
+                Toast.makeText(MainActivity.this,"右滑",Toast.LENGTH_SHORT).show();
+            }else if(e1.getY()-e2.getY()>MIN_DISTANCE){
+                colorSolutionIndex--;
+                if (colorSolutionIndex < 0) {
+                    colorSolutionIndex = colorSolutionArry.length - 1;
+                }
+                Toast.makeText(MainActivity.this,"上滑 " + colorSolutionArry[colorSolutionIndex][4],Toast.LENGTH_SHORT).show();
+                updateColorSolution();
+            }else if(e2.getY()-e1.getY()>MIN_DISTANCE){
+                Toast.makeText(MainActivity.this,"下滑 " + colorSolutionArry[colorSolutionIndex][4],Toast.LENGTH_SHORT).show();
+                updateColorSolution();
+                colorSolutionIndex++;
+                if (colorSolutionIndex >= colorSolutionArry.length) {
+                    colorSolutionIndex = 0;
+                }
+                Toast.makeText(MainActivity.this,"下滑 " + colorSolutionArry[colorSolutionIndex][4],Toast.LENGTH_SHORT).show();
+                updateColorSolution();
+            }
+            return true;
+        }
     }
 }
