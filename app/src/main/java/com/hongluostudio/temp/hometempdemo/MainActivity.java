@@ -174,7 +174,10 @@ public class MainActivity extends AppCompatActivity {
         public void onSensorChanged(SensorEvent event) {
             float lux = event.values[0];
 
-            Log.d(TAG, "lux: " + lux + "\n");
+            Log.d(TAG, "original lux: " + lux + "\n");
+            if (lux > 5)
+                lux = lux * 6;
+            Log.d(TAG, "manipulated lux: " + lux + "\n");
 
             int brightness;
             if (lux < 5) {
@@ -364,13 +367,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateColorSolution() {
-        Log.d(TAG, "colorSolutionArry[" + colorSolutionIndex + "][0]: " + colorSolutionArry[colorSolutionIndex][0]);
+        //Log.d(TAG, "colorSolutionArry[" + colorSolutionIndex + "][0]: " + colorSolutionArry[colorSolutionIndex][0]);
         colorDateBg = Color.parseColor(colorSolutionArry[colorSolutionIndex][0]);
-        Log.d(TAG, "colorSolutionArry[" + colorSolutionIndex + "][1]: " + colorSolutionArry[colorSolutionIndex][1]);
+        //Log.d(TAG, "colorSolutionArry[" + colorSolutionIndex + "][1]: " + colorSolutionArry[colorSolutionIndex][1]);
         colorTimeBg = Color.parseColor(colorSolutionArry[colorSolutionIndex][1]);
-        Log.d(TAG, "colorSolutionArry[" + colorSolutionIndex + "][2]: " + colorSolutionArry[colorSolutionIndex][2]);
+        //Log.d(TAG, "colorSolutionArry[" + colorSolutionIndex + "][2]: " + colorSolutionArry[colorSolutionIndex][2]);
         colorTimeFg = Color.parseColor(colorSolutionArry[colorSolutionIndex][2]);
-        Log.d(TAG, "colorSolutionArry[" + colorSolutionIndex + "][3]: " + colorSolutionArry[colorSolutionIndex][3]);
+        //Log.d(TAG, "colorSolutionArry[" + colorSolutionIndex + "][3]: " + colorSolutionArry[colorSolutionIndex][3]);
         colorDateFg = Color.parseColor(colorSolutionArry[colorSolutionIndex][3]);
 
         ConstraintLayout layoutDate = (ConstraintLayout)findViewById(R.id.ConstraintLayoutLeft);
