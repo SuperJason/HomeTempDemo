@@ -186,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             getTemperatureHumidity();
-            if (mUpdateLogCnt > 3/*3600*/ || mUpdateLogCnt == 0) { // 1小时更新一次数据
+            if (mUpdateLogCnt > 3600 || mUpdateLogCnt == 0) { // 1小时更新一次数据
                 updateLogData();
                 mUpdateLogCnt = 1;
             }
@@ -302,25 +302,6 @@ public class MainActivity extends AppCompatActivity {
         mLogShowStrBuf.append(" " + mTemperatureStr);
         mLogShowStrBuf.append(" " + mHumidityStr);
 
-        mLogShowStrBuf.delete(0, mLogShowStrBuf.length());
-        // 公历
-        //mLogShowStrBuf.append("公历: \n");
-        //SimpleDateFormat fDate = new SimpleDateFormat("yyyy年MM月dd日 EEEE", Locale.CHINESE);
-        SimpleDateFormat fDate = new SimpleDateFormat("yyyy年MM月dd日", Locale.CHINESE);
-        mLogShowStrBuf.append(fDate.format(date) + "\n");
-        fDate = new SimpleDateFormat("EEEE", Locale.CHINESE);
-        mLogShowStrBuf.append(fDate.format(date));
-        mLogShowStrBuf.append("\n\n");
-
-        // 农历
-        //mLogShowStrBuf.append("农历: \n");
-        mLogShowStrBuf.append(LunarUtils.getLunar(2022, 7, 3));
-
-        // 温湿度
-        mLogShowStrBuf.append("\n\n");
-        mLogShowStrBuf.append(" 温度: " + mTemperatureStr + "\n");
-        mLogShowStrBuf.append(" 湿度: " + mHumidityStr);
-
         mLogShowStrBuf.append("\n");
         mLogLineLength = mLogShowStrBuf.length();
         //Log.d(TAG, "mLogShowStrBuf length: " + mLogShowStrBuf.length() + "\n");
@@ -328,9 +309,9 @@ public class MainActivity extends AppCompatActivity {
         SpannableString ss = new SpannableString(mLogShowStrBuf.toString());
         // https://blog.csdn.net/pcaxb/article/details/47341249
         //设置字体(default,default-bold,monospace,serif,sans-serif)
-        ss.setSpan(new TypefaceSpan("sans"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new TypefaceSpan("serif"), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体大小（绝对值,单位：像素）
-        ss.setSpan(new AbsoluteSizeSpan(24,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new AbsoluteSizeSpan(16,true), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体前景色
         ss.setSpan(new ForegroundColorSpan(Color.WHITE), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         //设置字体背景色
