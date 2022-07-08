@@ -141,12 +141,19 @@ public class MainActivity extends AppCompatActivity {
         timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_fugaz_one_regular), Typeface.NORMAL);
         //timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_russo_one_regular), Typeface.NORMAL);
         //timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_stick_no_bills_bold), Typeface.NORMAL);
+
+        //timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_black_ops_one_regular), Typeface.NORMAL);
+        //timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_quantico_bold_italic), Typeface.NORMAL);
+        //timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_racing_sans_one_regular), Typeface.NORMAL);
+        //timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_rozha_one_regular), Typeface.NORMAL);
+        //timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_squada_one_regular), Typeface.NORMAL);
+        //timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_vt323_regular), Typeface.NORMAL);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         int action = event.getAction();
-        Log.d(TAG, "onTouchEvent: " + action + "\n");
+        //Log.d(TAG, "onTouchEvent: " + action + "\n");
 
         gestureDetector.onTouchEvent(event);
 
@@ -174,10 +181,10 @@ public class MainActivity extends AppCompatActivity {
         public void onSensorChanged(SensorEvent event) {
             float lux = event.values[0];
 
-            Log.d(TAG, "original lux: " + lux + "\n");
+            //Log.d(TAG, "original lux: " + lux + "\n");
             if (lux > 5)
                 lux = lux * 6;
-            Log.d(TAG, "manipulated lux: " + lux + "\n");
+            //Log.d(TAG, "manipulated lux: " + lux + "\n");
 
             int brightness;
             if (lux < 5) {
@@ -228,11 +235,11 @@ public class MainActivity extends AppCompatActivity {
         public void handleMessage(Message msg) {
             getTemperatureHumidity();
             if (mUpdateLogCnt > 720/*3600*/ || mUpdateLogCnt == 0) { // 1小时更新一次数据
-                updateColorSolution();
                 colorSolutionIndex++;
                 if (colorSolutionIndex >= colorSolutionArry.length) {
                     colorSolutionIndex = 0;
                 }
+                updateColorSolution();
                 mUpdateLogCnt = 1;
             }
             
