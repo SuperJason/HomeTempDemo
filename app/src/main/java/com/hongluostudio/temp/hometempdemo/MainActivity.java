@@ -1,5 +1,6 @@
 package com.hongluostudio.temp.hometempdemo;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
@@ -118,6 +119,7 @@ public class MainActivity extends AppCompatActivity {
             }
         },1000,1000);
 
+        // 隐藏虚拟按键及状态栏
         /* https://blog.csdn.net/liuyuejinqiu/article/details/70230963 */
         /* https://developer.android.com/training/system-ui/navigation#java */
         View v = getWindow().getDecorView();
@@ -420,6 +422,9 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             if(e1.getX()-e2.getX()>MIN_DISTANCE){
+                Intent intent = new Intent();
+                intent.setClass(MainActivity.this, TempChartActivity.class);
+                startActivity(intent);
                 Toast.makeText(MainActivity.this,"左滑", Toast.LENGTH_SHORT).show();
             }else if(e2.getX()-e1.getX()>MIN_DISTANCE){
                 Toast.makeText(MainActivity.this,"右滑",Toast.LENGTH_SHORT).show();
