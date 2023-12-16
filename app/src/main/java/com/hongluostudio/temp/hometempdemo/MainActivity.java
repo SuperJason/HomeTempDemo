@@ -127,15 +127,6 @@ public class MainActivity extends AppCompatActivity {
             }
         },1000,1000);
 
-        // 隐藏虚拟按键及状态栏
-        /* https://blog.csdn.net/liuyuejinqiu/article/details/70230963 */
-        /* https://developer.android.com/training/system-ui/navigation#java */
-        View v = getWindow().getDecorView();
-        int opt = View.SYSTEM_UI_FLAG_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-        v.setSystemUiVisibility(opt);
-
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         mLightSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         if (mLightSensor != null)
@@ -158,6 +149,48 @@ public class MainActivity extends AppCompatActivity {
         //timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_rozha_one_regular), Typeface.NORMAL);
         //timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_squada_one_regular), Typeface.NORMAL);
         //timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_vt323_regular), Typeface.NORMAL);
+
+        //Log.e(TAG, "onCreate()\n");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        // 隐藏虚拟按键及状态栏
+        /* https://blog.csdn.net/liuyuejinqiu/article/details/70230963 */
+        /* https://developer.android.com/training/system-ui/navigation#java */
+        View v = getWindow().getDecorView();
+        int opt = View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+        v.setSystemUiVisibility(opt);
+
+        //Log.e(TAG, "onStart()\n");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //Log.e(TAG, "onResume()\n");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        //Log.e(TAG, "onPause()\n");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        //Log.e(TAG, "onStop()\n");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //Log.e(TAG, "onDestroy()\n");
     }
 
     @Override

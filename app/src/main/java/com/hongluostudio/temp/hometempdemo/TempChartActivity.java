@@ -94,7 +94,7 @@ public class TempChartActivity extends DemoBase {
             entries.add(new Entry(tdData.get(index).temp, index));
         }
 
-        LineDataSet set = new LineDataSet(entries, "温度");
+        LineDataSet set = new LineDataSet(entries, "温度（℃）");
         set.setColor(Color.rgb(240, 238, 70));
         set.setLineWidth(2.5f);
         set.setCircleColor(Color.rgb(240, 238, 70));
@@ -122,7 +122,7 @@ public class TempChartActivity extends DemoBase {
         for (int index = 0; index < tdData.size(); index++)
             entries.add(new BarEntry(tdData.get(index).humi, index));
 
-        BarDataSet set = new BarDataSet(entries, "湿度");
+        BarDataSet set = new BarDataSet(entries, "湿度（%）");
         set.setColor(Color.rgb(60, 220, 78));
         set.setValueTextColor(Color.rgb(60, 220, 78));
         set.setValueTextSize(10f);
