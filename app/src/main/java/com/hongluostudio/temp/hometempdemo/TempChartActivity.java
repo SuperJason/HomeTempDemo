@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.WindowManager;
 
 import com.github.mikephil.charting.charts.CombinedChart;
@@ -34,8 +35,8 @@ public class TempChartActivity extends DemoBase {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        //getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+        //        WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_combined);
 
         mChart = findViewById(R.id.temp_humi_chart);
@@ -81,6 +82,18 @@ public class TempChartActivity extends DemoBase {
 
         mChart.setData(data);
         mChart.invalidate();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        // 隐藏虚拟按键及状态栏
+        View v = getWindow().getDecorView();
+        int opt = View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+        v.setSystemUiVisibility(opt);
     }
 
     // 温度
