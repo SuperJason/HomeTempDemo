@@ -1,167 +1,222 @@
 package com.hongluostudio.temp.hometempdemo;
 
-import android.app.Activity;
 import android.graphics.Color;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.WindowManager;
 
-import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.charts.CombinedChart;
+import com.github.mikephil.charting.charts.CombinedChart.DrawOrder;
 import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.XAxis.XAxisPosition;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.BubbleData;
+import com.github.mikephil.charting.data.BubbleDataSet;
+import com.github.mikephil.charting.data.BubbleEntry;
+import com.github.mikephil.charting.data.CandleData;
+import com.github.mikephil.charting.data.CandleDataSet;
+import com.github.mikephil.charting.data.CandleEntry;
+import com.github.mikephil.charting.data.CombinedData;
 import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.highlight.Highlight;
-import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
-import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.data.ScatterData;
+import com.github.mikephil.charting.data.ScatterDataSet;
+import com.github.mikephil.charting.interfaces.datasets.IDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.util.ArrayList;
 
-// https://blog.51cto.com/u_16175437/6757965
-// https://zhuanlan.zhihu.com/p/22134046
-public class TempChartActivity extends Activity implements
-        OnChartValueSelectedListener {
+// MPChartExample/src/com/xxmassdeveloper/mpchartexample/CombinedChartActivity.java
+public class TempChartActivity extends DemoBase {
 
-    protected final String TAG = getClass().getSimpleName();
-    private BarChart mChart;
+    private CombinedChart mChart;
+    private final int itemcount = 12;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_temp_chart);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        setContentView(R.layout.activity_combined);
 
-        // 隐藏虚拟按键及状态栏
-        /* https://blog.csdn.net/liuyuejinqiu/article/details/70230963 */
-        /* https://developer.android.com/training/system-ui/navigation#java */
-        View v = getWindow().getDecorView();
-        int opt = View.SYSTEM_UI_FLAG_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-        v.setSystemUiVisibility(opt);
-
-        mChart = (BarChart) findViewById(R.id.chart);
-        mChart.setOnChartValueSelectedListener(this);
-        mChart.setDescription("市场拓展表");
-        mChart.setNoDataTextDescription("You need to provide data for the chart.");
-        mChart.setDrawValueAboveBar(true);//将Y数据显示在点的上方
-
-        // mChart.setDrawBorders(true);
-
-        // scaling can now only be done on x- and y-axis separately
-        mChart.setPinchZoom(true);//挤压缩放
-
-        mChart.setDrawBarShadow(false);
+        mChart = (CombinedChart) findViewById(R.id.chart1);
+        mChart.setDescription("");
+        mChart.setBackgroundColor(Color.WHITE);
         mChart.setDrawGridBackground(false);
-        mChart.setScaleYEnabled(false);
-        mChart.setDoubleTapToZoomEnabled(false);//双击缩放
-        mChart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);//x轴位置
-        // create a custom MarkerView (extend MarkerView) and specify the layout
-        // to use for it
-        //自定义   MarkerView
-        MyMarkerView mv = new MyMarkerView(this, R.layout.custom_marker_view);
+        mChart.setDrawBarShadow(false);
 
-        // define an offset to change the original position of the marker
-        // (optional)
-        // mv.setOffsets(-mv.getMeasuredWidth() / 2, -mv.getMeasuredHeight());
+        // draw bars behind lines
+        mChart.setDrawOrder(new DrawOrder[] {
+                DrawOrder.BAR, DrawOrder.BUBBLE, DrawOrder.CANDLE, DrawOrder.LINE, DrawOrder.SCATTER
+        });
 
-        // set the marker to the chart
-        mChart.setMarkerView(mv);
-        Legend l = mChart.getLegend();//图例
-        l.setPosition(Legend.LegendPosition.RIGHT_OF_CHART_INSIDE);
-        l.setTextSize(10f);
-        l.setFormSize(10f); // set the size of the legend forms/shapes
-        l.setForm(Legend.LegendForm.CIRCLE);
-        l.setWordWrapEnabled(true);
-        l.setPosition(Legend.LegendPosition.BELOW_CHART_CENTER);
-
-        XAxis xl = mChart.getXAxis();
-        xl.setLabelRotationAngle(-20);//设置x轴字体显示角度
-        //xl.setPosition(XAxisPosition.BOTTOM);
-
+        YAxis rightAxis = mChart.getAxisRight();
+        rightAxis.setDrawGridLines(false);
+        rightAxis.setAxisMinValue(0f); // this replaces setStartAtZero(true)
 
         YAxis leftAxis = mChart.getAxisLeft();
-        //leftAxis.setValueFormatter(new LargeValueFormatter());//
-        leftAxis.setValueFormatter(new MyYValueFormatter());//自定义y数据格式化方式
-        leftAxis.setDrawGridLines(false);//是否画线
-        leftAxis.setSpaceTop(30f);
+        leftAxis.setDrawGridLines(false);
         leftAxis.setAxisMinValue(0f); // this replaces setStartAtZero(true)
-        mChart.getAxisRight().setEnabled(false);
-        setData(10);
-    }
 
-    public void setData(int num) {
+        XAxis xAxis = mChart.getXAxis();
+        xAxis.setPosition(XAxisPosition.BOTH_SIDED);
 
-        ArrayList<String> xVals = new ArrayList<String>();
-        for (int i = 0; i < num; i++) {
-            xVals.add( "小谢"+ i);
-        }
+        CombinedData data = new CombinedData(mMonths);
 
-        ArrayList<BarEntry> yVals1 = new ArrayList<BarEntry>();
-        ArrayList<BarEntry> yVals2 = new ArrayList<BarEntry>();
-        ArrayList<BarEntry> yVals3 = new ArrayList<BarEntry>();
-
-
-        for (int i = 0; i < num; i++) {
-            float val = (float) (Math.random() * num);
-            yVals1.add(new BarEntry(val, i));
-        }
-
-        for (int i = 0; i < num; i++) {
-            float val = (float) (Math.random() * num);;
-            yVals2.add(new BarEntry(val, i));
-        }
-
-        for (int i = 0; i < num; i++) {
-            float val = (float) (Math.random() * num);
-            yVals3.add(new BarEntry(val, i));
-        }
-
-        // create 3 datasets with different types
-        BarDataSet set1 = new BarDataSet(yVals1, "一季度");
-        // set1.setColors(ColorTemplate.createColors(getApplicationContext(),
-        // ColorTemplate.FRESH_COLORS));
-        set1.setColor(Color.rgb(104, 241, 175));
-        BarDataSet set2 = new BarDataSet(yVals2, "二季度");
-        set2.setColor(Color.rgb(164, 228, 251));
-        BarDataSet set3 = new BarDataSet(yVals3, "三季度");
-        set3.setColor(Color.rgb(242, 247, 158));
-
-        ArrayList<IBarDataSet> dataSets = new ArrayList<IBarDataSet>();
-        dataSets.add(set1);
-        dataSets.add(set2);
-        dataSets.add(set3);
-
-        BarData data = new BarData(xVals, dataSets);
-        // data.setValueFormatter(new LargeValueFormatter());
-
-        // add space between the dataset groups in percent of bar-width
-        data.setValueFormatter(new CustomerValueFormatter());
-        data.setDrawValues(true);
-        data.setValueTextColor(Color.BLACK);
-        data.setValueTextSize(13);
-        data.setGroupSpace(80f);//设置组数据间距
-        //data.setValueTypeface(tf);
+        data.setData(generateLineData());
+        data.setData(generateBarData());
+//        data.setData(generateBubbleData());
+//         data.setData(generateScatterData());
+//         data.setData(generateCandleData());
 
         mChart.setData(data);
-        mChart.animateXY(800,800);//图表数据显示动画
-        mChart.setVisibleXRangeMaximum(15);//设置屏幕显示条数
         mChart.invalidate();
     }
 
-    @Override
-    public void onValueSelected(Entry e, int dataSetIndex, Highlight h) {
-        Log.i("Activity", "Selected: " + e.toString() + ", dataSet: "
-                + dataSetIndex);
-        Toast.makeText(TempChartActivity.this, e.getXIndex()+"valu"+e.getVal()+e.getData(), Toast.LENGTH_SHORT).show();
+    private LineData generateLineData() {
+
+        LineData d = new LineData();
+
+        ArrayList<Entry> entries = new ArrayList<Entry>();
+
+        for (int index = 0; index < itemcount; index++)
+            entries.add(new Entry(getRandom(15, 10), index));
+
+        LineDataSet set = new LineDataSet(entries, "Line DataSet");
+        set.setColor(Color.rgb(240, 238, 70));
+        set.setLineWidth(2.5f);
+        set.setCircleColor(Color.rgb(240, 238, 70));
+        set.setCircleRadius(5f);
+        set.setFillColor(Color.rgb(240, 238, 70));
+        set.setDrawCubic(true);
+        set.setDrawValues(true);
+        set.setValueTextSize(10f);
+        set.setValueTextColor(Color.rgb(240, 238, 70));
+
+        set.setAxisDependency(YAxis.AxisDependency.LEFT);
+
+        d.addDataSet(set);
+
+        return d;
+    }
+
+    private BarData generateBarData() {
+
+        BarData d = new BarData();
+
+        ArrayList<BarEntry> entries = new ArrayList<BarEntry>();
+
+        for (int index = 0; index < itemcount; index++)
+            entries.add(new BarEntry(getRandom(15, 30), index));
+
+        BarDataSet set = new BarDataSet(entries, "Bar DataSet");
+        set.setColor(Color.rgb(60, 220, 78));
+        set.setValueTextColor(Color.rgb(60, 220, 78));
+        set.setValueTextSize(10f);
+        d.addDataSet(set);
+
+        set.setAxisDependency(YAxis.AxisDependency.LEFT);
+
+        return d;
+    }
+
+    protected ScatterData generateScatterData() {
+
+        ScatterData d = new ScatterData();
+
+        ArrayList<Entry> entries = new ArrayList<Entry>();
+
+        for (int index = 0; index < itemcount; index++)
+            entries.add(new Entry(getRandom(20, 15), index));
+
+        ScatterDataSet set = new ScatterDataSet(entries, "Scatter DataSet");
+        set.setColor(Color.GREEN);
+        set.setScatterShapeSize(7.5f);
+        set.setDrawValues(false);
+        set.setValueTextSize(10f);
+        d.addDataSet(set);
+
+        return d;
+    }
+
+    protected CandleData generateCandleData() {
+
+        CandleData d = new CandleData();
+
+        ArrayList<CandleEntry> entries = new ArrayList<CandleEntry>();
+
+        for (int index = 0; index < itemcount; index++)
+            entries.add(new CandleEntry(index, 20f, 10f, 13f, 17f));
+
+        CandleDataSet set = new CandleDataSet(entries, "Candle DataSet");
+        set.setColor(Color.rgb(80, 80, 80));
+        set.setBarSpace(0.3f);
+        set.setValueTextSize(10f);
+        set.setDrawValues(false);
+        d.addDataSet(set);
+
+        return d;
+    }
+
+    protected BubbleData generateBubbleData() {
+
+        BubbleData bd = new BubbleData();
+
+        ArrayList<BubbleEntry> entries = new ArrayList<BubbleEntry>();
+
+        for (int index = 0; index < itemcount; index++) {
+            float rnd = getRandom(20, 30);
+            entries.add(new BubbleEntry(index, rnd, rnd));
+        }
+
+        BubbleDataSet set = new BubbleDataSet(entries, "Bubble DataSet");
+        set.setColors(ColorTemplate.VORDIPLOM_COLORS);
+        set.setValueTextSize(10f);
+        set.setValueTextColor(Color.WHITE);
+        set.setHighlightCircleWidth(1.5f);
+        set.setDrawValues(true);
+        bd.addDataSet(set);
+
+        return bd;
+    }
+
+    private float getRandom(float range, float startsfrom) {
+        return (float) (Math.random() * range) + startsfrom;
     }
 
     @Override
-    public void onNothingSelected() {
-        Log.i("Activity", "Nothing selected.");
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.combined, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.actionToggleLineValues: {
+                for (IDataSet set : mChart.getData().getDataSets()) {
+                    if (set instanceof LineDataSet)
+                        set.setDrawValues(!set.isDrawValuesEnabled());
+                }
+
+                mChart.invalidate();
+                break;
+            }
+            case R.id.actionToggleBarValues: {
+                for (IDataSet set : mChart.getData().getDataSets()) {
+                    if (set instanceof BarDataSet)
+                        set.setDrawValues(!set.isDrawValuesEnabled());
+                }
+
+                mChart.invalidate();
+                break;
+            }
+        }
+        return true;
     }
 }
