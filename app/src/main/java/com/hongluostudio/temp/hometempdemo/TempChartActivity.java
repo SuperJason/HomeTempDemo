@@ -14,28 +14,22 @@ import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.data.BubbleData;
-import com.github.mikephil.charting.data.BubbleDataSet;
-import com.github.mikephil.charting.data.BubbleEntry;
-import com.github.mikephil.charting.data.CandleData;
-import com.github.mikephil.charting.data.CandleDataSet;
-import com.github.mikephil.charting.data.CandleEntry;
 import com.github.mikephil.charting.data.CombinedData;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.data.ScatterData;
-import com.github.mikephil.charting.data.ScatterDataSet;
 import com.github.mikephil.charting.interfaces.datasets.IDataSet;
-import com.github.mikephil.charting.utils.ColorTemplate;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 // MPChartExample/src/com/xxmassdeveloper/mpchartexample/CombinedChartActivity.java
 public class TempChartActivity extends DemoBase {
 
     private CombinedChart mChart;
-    private final int itemcount = 12;
+    ArrayList<TempHumiData> tdData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,50 +38,63 @@ public class TempChartActivity extends DemoBase {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_combined);
 
-        mChart = (CombinedChart) findViewById(R.id.chart1);
-        mChart.setDescription("");
+        mChart = findViewById(R.id.temp_humi_chart);
+        mChart.setDescription("温度湿度显示");
         mChart.setBackgroundColor(Color.WHITE);
         mChart.setDrawGridBackground(false);
         mChart.setDrawBarShadow(false);
 
         // draw bars behind lines
         mChart.setDrawOrder(new DrawOrder[] {
-                DrawOrder.BAR, DrawOrder.BUBBLE, DrawOrder.CANDLE, DrawOrder.LINE, DrawOrder.SCATTER
+                DrawOrder.BAR, DrawOrder.LINE,
         });
 
-        YAxis rightAxis = mChart.getAxisRight();
-        rightAxis.setDrawGridLines(false);
-        rightAxis.setAxisMinValue(0f); // this replaces setStartAtZero(true)
-
+        // 温度
         YAxis leftAxis = mChart.getAxisLeft();
-        leftAxis.setDrawGridLines(false);
-        leftAxis.setAxisMinValue(0f); // this replaces setStartAtZero(true)
+        leftAxis.setDrawGridLines(true);
+        leftAxis.setAxisMinValue(-20.0f);
+        leftAxis.setAxisMaxValue(60.0f);
+
+        // 湿度
+        YAxis rightAxis = mChart.getAxisRight();
+        rightAxis.setDrawGridLines(true);
+        rightAxis.setAxisMinValue(0.0f);
+        rightAxis.setAxisMaxValue(100.0f);
 
         XAxis xAxis = mChart.getXAxis();
         xAxis.setPosition(XAxisPosition.BOTH_SIDED);
 
-        CombinedData data = new CombinedData(mMonths);
+        tdData = (ArrayList<TempHumiData>) getIntent().getSerializableExtra("key");
+
+        timeStamp = new ArrayList<>();
+        for (int index = 0; index < tdData.size(); index++) {
+            Date date = tdData.get(index).date;
+            SimpleDateFormat dateTag = new SimpleDateFormat("yyyy年M月d日 HH:mm:ss", Locale.CHINESE);
+            timeStamp.add(dateTag.format(date));
+        }
+
+        CombinedData data = new CombinedData(timeStamp.toArray(new String[0]));
+        //CombinedData data = new CombinedData(new String[] {"Jan", "Feb", "Mar"});
 
         data.setData(generateLineData());
         data.setData(generateBarData());
-//        data.setData(generateBubbleData());
-//         data.setData(generateScatterData());
-//         data.setData(generateCandleData());
 
         mChart.setData(data);
         mChart.invalidate();
     }
 
+    // 温度
     private LineData generateLineData() {
 
         LineData d = new LineData();
 
         ArrayList<Entry> entries = new ArrayList<Entry>();
 
-        for (int index = 0; index < itemcount; index++)
-            entries.add(new Entry(getRandom(15, 10), index));
+        for (int index = 0; index < tdData.size(); index++) {
+            entries.add(new Entry(tdData.get(index).temp, index));
+        }
 
-        LineDataSet set = new LineDataSet(entries, "Line DataSet");
+        LineDataSet set = new LineDataSet(entries, "温度");
         set.setColor(Color.rgb(240, 238, 70));
         set.setLineWidth(2.5f);
         set.setCircleColor(Color.rgb(240, 238, 70));
@@ -105,84 +112,25 @@ public class TempChartActivity extends DemoBase {
         return d;
     }
 
+    // 湿度
     private BarData generateBarData() {
 
         BarData d = new BarData();
 
         ArrayList<BarEntry> entries = new ArrayList<BarEntry>();
 
-        for (int index = 0; index < itemcount; index++)
-            entries.add(new BarEntry(getRandom(15, 30), index));
+        for (int index = 0; index < tdData.size(); index++)
+            entries.add(new BarEntry(tdData.get(index).humi, index));
 
-        BarDataSet set = new BarDataSet(entries, "Bar DataSet");
+        BarDataSet set = new BarDataSet(entries, "湿度");
         set.setColor(Color.rgb(60, 220, 78));
         set.setValueTextColor(Color.rgb(60, 220, 78));
         set.setValueTextSize(10f);
         d.addDataSet(set);
 
-        set.setAxisDependency(YAxis.AxisDependency.LEFT);
+        set.setAxisDependency(YAxis.AxisDependency.RIGHT);
 
         return d;
-    }
-
-    protected ScatterData generateScatterData() {
-
-        ScatterData d = new ScatterData();
-
-        ArrayList<Entry> entries = new ArrayList<Entry>();
-
-        for (int index = 0; index < itemcount; index++)
-            entries.add(new Entry(getRandom(20, 15), index));
-
-        ScatterDataSet set = new ScatterDataSet(entries, "Scatter DataSet");
-        set.setColor(Color.GREEN);
-        set.setScatterShapeSize(7.5f);
-        set.setDrawValues(false);
-        set.setValueTextSize(10f);
-        d.addDataSet(set);
-
-        return d;
-    }
-
-    protected CandleData generateCandleData() {
-
-        CandleData d = new CandleData();
-
-        ArrayList<CandleEntry> entries = new ArrayList<CandleEntry>();
-
-        for (int index = 0; index < itemcount; index++)
-            entries.add(new CandleEntry(index, 20f, 10f, 13f, 17f));
-
-        CandleDataSet set = new CandleDataSet(entries, "Candle DataSet");
-        set.setColor(Color.rgb(80, 80, 80));
-        set.setBarSpace(0.3f);
-        set.setValueTextSize(10f);
-        set.setDrawValues(false);
-        d.addDataSet(set);
-
-        return d;
-    }
-
-    protected BubbleData generateBubbleData() {
-
-        BubbleData bd = new BubbleData();
-
-        ArrayList<BubbleEntry> entries = new ArrayList<BubbleEntry>();
-
-        for (int index = 0; index < itemcount; index++) {
-            float rnd = getRandom(20, 30);
-            entries.add(new BubbleEntry(index, rnd, rnd));
-        }
-
-        BubbleDataSet set = new BubbleDataSet(entries, "Bubble DataSet");
-        set.setColors(ColorTemplate.VORDIPLOM_COLORS);
-        set.setValueTextSize(10f);
-        set.setValueTextColor(Color.WHITE);
-        set.setHighlightCircleWidth(1.5f);
-        set.setDrawValues(true);
-        bd.addDataSet(set);
-
-        return bd;
     }
 
     private float getRandom(float range, float startsfrom) {

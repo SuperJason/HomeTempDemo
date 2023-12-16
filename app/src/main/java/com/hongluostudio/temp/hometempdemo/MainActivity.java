@@ -35,6 +35,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Timer;
@@ -46,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
     protected final int BRIGHTNESS_CHANGE_DELAY_CNT_MAX = 9;
     protected final int AFTER_TOUCH_SCREENON_CNT_MAX = 9;
     private static final int MIN_DISTANCE = 100;
+    final int DATE_TIME_TO_MINUTE = 60 * 1000;
+    final int DATE_TIME_TO_SECOND = 1000;
+    final int CACHED_DATA_COUNT_FOR_SHOW = 96;
 
     private final Timer mTimer = new Timer();
     private String mTemperatureStr, mHumidityStr;
@@ -100,10 +104,14 @@ public class MainActivity extends AppCompatActivity {
             /*  凝夜紫,             朱孔阳  */
     };
 
+    ArrayList<TempHumiData> thData;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        thData = new ArrayList<TempHumiData>();
 
         colorDateBg = this.getResources().getColor(R.color.colorDateBg);
         colorTimeBg = this.getResources().getColor(R.color.colorTimeBg);
@@ -171,7 +179,6 @@ public class MainActivity extends AppCompatActivity {
             default :
                 return super.onTouchEvent(event);
         }
-
     }
 
     public class LightSensorListener implements SensorEventListener {
@@ -259,13 +266,15 @@ public class MainActivity extends AppCompatActivity {
 
     private int getTemperatureHumidity() {
         FileInputStream inputStream;
+        float tempValue = 0.0f;
+        float humiValue = 0.0f;
 
         try {
             inputStream = new FileInputStream("/sys/class/hwmon/hwmon3/temp1_input");
             byte[] bytes = new byte[16];
             int n = 0;
             n = inputStream.read(bytes);
-            float tempValue = Float.parseFloat(new String(bytes).substring(0, n - 1));
+            tempValue = Float.parseFloat(new String(bytes).substring(0, n - 1));
             tempValue = new BigDecimal(tempValue / 1000).setScale(1, BigDecimal.ROUND_UP).floatValue();
             mTemperatureStr = String.format("%2.1f℃", tempValue);
             //Log.d(TAG, "n: " + n + ", mTemperatureStr: " + mTemperatureStr + "\n");
@@ -279,13 +288,33 @@ public class MainActivity extends AppCompatActivity {
             byte[] bytes = new byte[16];
             int n = 0;
             n = inputStream.read(bytes);
-            float humiValue = Float.parseFloat(new String(bytes).substring(0, n - 1));
+            humiValue = Float.parseFloat(new String(bytes).substring(0, n - 1));
             humiValue = new BigDecimal(humiValue / 1000).setScale(1, BigDecimal.ROUND_UP).floatValue();
             mHumidityStr = String.format("%2.1f%%", humiValue);
             //Log.d(TAG, "n: " + n + ", mHumidityStr: " + mHumidityStr + "\n");
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+
+        Date nowDate = new Date();
+/*
+        SimpleDateFormat dateTag = new SimpleDateFormat("yyyy年M月d日 HH:mm:ss", Locale.CHINESE);
+        if (thData.size() == 0) {
+            Log.d(TAG, "nowDate: " + dateTag.format(nowDate) + ", thData.size(): " + thData.size());
+        } else {
+            Log.d(TAG, "nowDate: " + dateTag.format(nowDate) + ", thData.size(): " + thData.size() + ", diff: " + (nowDate.getTime() - thData.get(thData.size() - 1).date.getTime()) / 1000);
+        }
+*/
+        if (thData.size() == 0 || nowDate.getTime() - thData.get(thData.size() - 1).date.getTime() > 30 * DATE_TIME_TO_MINUTE) {
+            TempHumiData t = new TempHumiData();
+            t.date = nowDate;
+            t.temp = tempValue;
+            t.humi = humiValue;
+            thData.add(t);
+            if (thData.size() > CACHED_DATA_COUNT_FOR_SHOW) {
+                thData.remove(0);
+            }
         }
 
         return 0;
@@ -422,7 +451,26 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             if(e1.getX()-e2.getX()>MIN_DISTANCE){
+
+                /*
+                thData.removeAll(thData);
+                // 填充数据用于测试
+                for (int i = 0; i < 48; i++) {
+                    Date nowDate = new Date();
+                    TempHumiData data = new TempHumiData();
+                    data.date = new Date(nowDate.getTime() + (long)i * 30 * 60 * 1000); // 30分钟递进
+                    SimpleDateFormat dateTag = new SimpleDateFormat("yyyy年M月d日 HH:mm:ss", Locale.CHINESE);
+                    Log.d(TAG, "i: " + i + ", date: " + dateTag.format(data.date));
+                    data.temp = (float) (Math.random() * 70) - 15;
+                    data.humi = (float) (Math.random() * 90) + 5;
+                    thData.add(data);
+                    if (thData.size() > 48) {
+                        thData.remove(0);
+                    }
+                }
+                */
                 Intent intent = new Intent();
+                intent.putExtra("key", thData);
                 intent.setClass(MainActivity.this, TempChartActivity.class);
                 startActivity(intent);
                 Toast.makeText(MainActivity.this,"左滑", Toast.LENGTH_SHORT).show();
