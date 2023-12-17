@@ -336,14 +336,14 @@ public class MainActivity extends AppCompatActivity {
         if (thData.size() == 0) {
             Log.d(TAG, "nowDate: " + dateTag.format(nowDate) + ", thData.size(): " + thData.size());
         } else {
-            Log.d(TAG, "nowDate: " + dateTag.format(nowDate) + ", thData.size(): " + thData.size() + ", diff: " + (nowDate.getTime() - thData.get(thData.size() - 1).date.getTime()) / 1000);
+            Log.d(TAG, "nowDate: " + dateTag.format(nowDate) + ", thData.size(): " + thData.size() + ", diff: " + (nowDate.getTime() - thData.get(thData.size() - 1).getDate().getTime()) / 1000);
         }
 */
-        if (thData.size() == 0 || nowDate.getTime() - thData.get(thData.size() - 1).date.getTime() > 30 * DATE_TIME_TO_MINUTE) {
+        if (thData.size() == 0 || nowDate.getTime() - thData.get(thData.size() - 1).getDate().getTime() > 30 * DATE_TIME_TO_MINUTE) {
             TempHumiData t = new TempHumiData();
-            t.date = nowDate;
-            t.temp = tempValue;
-            t.humi = humiValue;
+            t.setDate(nowDate);
+            t.setTemp(tempValue);
+            t.setHumi(humiValue);
             thData.add(t);
             if (thData.size() > CACHED_DATA_COUNT_FOR_SHOW) {
                 thData.remove(0);
@@ -485,23 +485,24 @@ public class MainActivity extends AppCompatActivity {
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             if(e1.getX()-e2.getX()>MIN_DISTANCE){
 
-                /*
+/*
                 thData.removeAll(thData);
                 // 填充数据用于测试
                 for (int i = 0; i < 48; i++) {
                     Date nowDate = new Date();
                     TempHumiData data = new TempHumiData();
-                    data.date = new Date(nowDate.getTime() + (long)i * 30 * 60 * 1000); // 30分钟递进
+                    data.setDate(new Date(nowDate.getTime() + (long)i * 30 * 60 * 1000)); // 30分钟递进
                     SimpleDateFormat dateTag = new SimpleDateFormat("yyyy年M月d日 HH:mm:ss", Locale.CHINESE);
-                    Log.d(TAG, "i: " + i + ", date: " + dateTag.format(data.date));
-                    data.temp = (float) (Math.random() * 70) - 15;
-                    data.humi = (float) (Math.random() * 90) + 5;
+                    Log.d(TAG, "i: " + i + ", date: " + dateTag.format(data.getDate()));
+                    data.setTemp((float) (Math.random() * 70) - 15);
+                    data.setHumi((float) (Math.random() * 90) + 5);
                     thData.add(data);
                     if (thData.size() > 48) {
                         thData.remove(0);
                     }
                 }
-                */
+ */
+
                 Intent intent = new Intent();
                 intent.putExtra("key", thData);
                 intent.setClass(MainActivity.this, TempChartActivity.class);

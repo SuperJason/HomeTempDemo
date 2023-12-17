@@ -71,7 +71,7 @@ public class TempChartActivity extends FragmentActivity {
 
         timeStamp = new ArrayList<>();
         for (int index = 0; index < thData.size(); index++) {
-            Date date = thData.get(index).date;
+            Date date = thData.get(index).getDate();
             SimpleDateFormat dateTag = new SimpleDateFormat("yyyy年M月d日 HH:mm:ss", Locale.CHINESE);
             timeStamp.add(dateTag.format(date));
         }
@@ -112,7 +112,7 @@ public class TempChartActivity extends FragmentActivity {
         ArrayList<Entry> entries = new ArrayList<Entry>();
 
         for (int index = 0; index < thData.size(); index++) {
-            entries.add(new Entry(thData.get(index).temp, index));
+            entries.add(new Entry(thData.get(index).getTemp(), index));
         }
 
         LineDataSet set = new LineDataSet(entries, "温度（℃）");
@@ -141,7 +141,7 @@ public class TempChartActivity extends FragmentActivity {
         ArrayList<BarEntry> entries = new ArrayList<BarEntry>();
 
         for (int index = 0; index < thData.size(); index++)
-            entries.add(new BarEntry(thData.get(index).humi, index));
+            entries.add(new BarEntry(thData.get(index).getHumi(), index));
 
         BarDataSet set = new BarDataSet(entries, "湿度（%）");
         set.setColor(Color.rgb(60, 220, 78));
