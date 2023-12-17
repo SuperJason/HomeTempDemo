@@ -506,7 +506,8 @@ public class MainActivity extends AppCompatActivity {
                 intent.putExtra("key", thData);
                 intent.setClass(MainActivity.this, TempChartActivity.class);
                 startActivity(intent);
-                Toast.makeText(MainActivity.this,"左滑", Toast.LENGTH_SHORT).show();
+                overridePendingTransition(R.anim.move_right_in_activity, R.anim.move_left_out_activity);
+                //Toast.makeText(MainActivity.this,"左滑", Toast.LENGTH_SHORT).show();
             }else if(e2.getX()-e1.getX()>MIN_DISTANCE){
                 Toast.makeText(MainActivity.this,"右滑",Toast.LENGTH_SHORT).show();
             }else if(e1.getY()-e2.getY()>MIN_DISTANCE){
