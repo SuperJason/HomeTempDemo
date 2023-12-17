@@ -43,9 +43,14 @@ public class TempChartActivity extends FragmentActivity {
 
         mChart = findViewById(R.id.temp_humi_chart);
         mChart.setDescription("温度湿度显示");
-        mChart.setBackgroundColor(Color.WHITE);
+        mChart.setBackgroundColor(Color.parseColor("#CFE3D7")); // 颜色名称：湖绿
         mChart.setDrawGridBackground(false);
         mChart.setDrawBarShadow(false);
+        mChart.setDoubleTapToZoomEnabled(false);
+        mChart.setPinchZoom(true);//挤压缩放
+
+        //mChart.getXAxis().setLabelRotationAngle(-20);//设置x轴字体显示角度
+        mChart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
 
         // draw bars behind lines
         mChart.setDrawOrder(new DrawOrder[] {
@@ -55,12 +60,18 @@ public class TempChartActivity extends FragmentActivity {
         // 温度
         YAxis leftAxis = mChart.getAxisLeft();
         leftAxis.setDrawGridLines(true);
+        leftAxis.setAxisLineColor(this.getResources().getColor(R.color.colorTemperature));
+        leftAxis.setGridColor(this.getResources().getColor(R.color.colorTemperature));
+        leftAxis.setTextColor(this.getResources().getColor(R.color.colorTempLabel));
         leftAxis.setAxisMinValue(-20.0f);
         leftAxis.setAxisMaxValue(60.0f);
 
         // 湿度
         YAxis rightAxis = mChart.getAxisRight();
         rightAxis.setDrawGridLines(true);
+        rightAxis.setTextColor(this.getResources().getColor(R.color.colorHumility));
+        rightAxis.setGridColor(this.getResources().getColor(R.color.colorHumility));
+        rightAxis.setTextColor(this.getResources().getColor(R.color.colorHumiLabel));
         rightAxis.setAxisMinValue(0.0f);
         rightAxis.setAxisMaxValue(100.0f);
 
@@ -116,15 +127,15 @@ public class TempChartActivity extends FragmentActivity {
         }
 
         LineDataSet set = new LineDataSet(entries, "温度（℃）");
-        set.setColor(Color.rgb(240, 238, 70));
+        set.setColor(this.getResources().getColor(R.color.colorTemperature));
         set.setLineWidth(2.5f);
-        set.setCircleColor(Color.rgb(240, 238, 70));
+        set.setCircleColor(this.getResources().getColor(R.color.colorTemperature));
         set.setCircleRadius(5f);
-        set.setFillColor(Color.rgb(240, 238, 70));
+        set.setFillColor(this.getResources().getColor(R.color.colorTemperature));
         set.setDrawCubic(true);
         set.setDrawValues(true);
         set.setValueTextSize(10f);
-        set.setValueTextColor(Color.rgb(240, 238, 70));
+        set.setValueTextColor(this.getResources().getColor(R.color.colorTempLabel));
 
         set.setAxisDependency(YAxis.AxisDependency.LEFT);
 
@@ -144,8 +155,8 @@ public class TempChartActivity extends FragmentActivity {
             entries.add(new BarEntry(thData.get(index).getHumi(), index));
 
         BarDataSet set = new BarDataSet(entries, "湿度（%）");
-        set.setColor(Color.rgb(60, 220, 78));
-        set.setValueTextColor(Color.rgb(60, 220, 78));
+        set.setColor(this.getResources().getColor(R.color.colorHumility));
+        set.setValueTextColor(this.getResources().getColor(R.color.colorHumiLabel));
         set.setValueTextSize(10f);
         d.addDataSet(set);
 

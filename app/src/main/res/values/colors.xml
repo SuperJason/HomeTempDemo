@@ -7,4 +7,8 @@
     <color name="colorDateBg">#06436F</color>
     <color name="colorTimeFg">#06436F</color>
     <color name="colorDateFg">#FFFFFF</color>
+    <color name="colorTemperature">#DA4268</color>
+    <color name="colorTempLabel">#DA4268</color>
+    <color name="colorHumility">#ABD5E1</color>
+    <color name="colorHumiLabel">#0A2456</color>
 </resources>
