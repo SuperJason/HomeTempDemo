@@ -2,6 +2,7 @@ package com.hongluostudio.temp.hometempdemo;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,10 +28,11 @@ import java.util.Date;
 import java.util.Locale;
 
 // MPChartExample/src/com/xxmassdeveloper/mpchartexample/CombinedChartActivity.java
-public class TempChartActivity extends DemoBase {
+public class TempChartActivity extends FragmentActivity {
 
     private CombinedChart mChart;
-    ArrayList<TempHumiData> tdData;
+    ArrayList<TempHumiData> thData;
+    public ArrayList<String> timeStamp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,11 +67,11 @@ public class TempChartActivity extends DemoBase {
         XAxis xAxis = mChart.getXAxis();
         xAxis.setPosition(XAxisPosition.BOTH_SIDED);
 
-        tdData = (ArrayList<TempHumiData>) getIntent().getSerializableExtra("key");
+        thData = (ArrayList<TempHumiData>) getIntent().getSerializableExtra("key");
 
         timeStamp = new ArrayList<>();
-        for (int index = 0; index < tdData.size(); index++) {
-            Date date = tdData.get(index).date;
+        for (int index = 0; index < thData.size(); index++) {
+            Date date = thData.get(index).date;
             SimpleDateFormat dateTag = new SimpleDateFormat("yyyy年M月d日 HH:mm:ss", Locale.CHINESE);
             timeStamp.add(dateTag.format(date));
         }
@@ -96,6 +98,12 @@ public class TempChartActivity extends DemoBase {
         v.setSystemUiVisibility(opt);
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.move_left_in_activity, R.anim.move_right_out_activity);
+    }
+
     // 温度
     private LineData generateLineData() {
 
@@ -103,8 +111,8 @@ public class TempChartActivity extends DemoBase {
 
         ArrayList<Entry> entries = new ArrayList<Entry>();
 
-        for (int index = 0; index < tdData.size(); index++) {
-            entries.add(new Entry(tdData.get(index).temp, index));
+        for (int index = 0; index < thData.size(); index++) {
+            entries.add(new Entry(thData.get(index).temp, index));
         }
 
         LineDataSet set = new LineDataSet(entries, "温度（℃）");
@@ -132,8 +140,8 @@ public class TempChartActivity extends DemoBase {
 
         ArrayList<BarEntry> entries = new ArrayList<BarEntry>();
 
-        for (int index = 0; index < tdData.size(); index++)
-            entries.add(new BarEntry(tdData.get(index).humi, index));
+        for (int index = 0; index < thData.size(); index++)
+            entries.add(new BarEntry(thData.get(index).humi, index));
 
         BarDataSet set = new BarDataSet(entries, "湿度（%）");
         set.setColor(Color.rgb(60, 220, 78));
