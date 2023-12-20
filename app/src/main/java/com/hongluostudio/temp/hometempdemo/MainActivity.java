@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int MIN_DISTANCE = 100;
     final int DATE_TIME_TO_MINUTE = 60 * 1000;
     final int DATE_TIME_TO_SECOND = 1000;
-    final int CACHED_DATA_COUNT_FOR_SHOW = 96;
+    final int CACHED_DATA_COUNT_FOR_SHOW = 30 * 24; // 最多保存30天的数据
 
     private final Timer mTimer = new Timer();
     private String mTemperatureStr, mHumidityStr;
@@ -339,7 +339,11 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "nowDate: " + dateTag.format(nowDate) + ", thData.size(): " + thData.size() + ", diff: " + (nowDate.getTime() - thData.get(thData.size() - 1).getDate().getTime()) / 1000);
         }
 */
-        if (thData.size() == 0 || nowDate.getTime() - thData.get(thData.size() - 1).getDate().getTime() > 30 * DATE_TIME_TO_MINUTE) {
+        long timeDelta = 0;
+        if (thData.size() > 0) {
+            timeDelta = nowDate.getTime() - thData.get(thData.size() - 1).getDate().getTime();
+        }
+        if (thData.size() == 0 || timeDelta > 30 * DATE_TIME_TO_MINUTE) {  // 数据采样间隔为30分钟，一天采样24
             TempHumiData t = new TempHumiData();
             t.setDate(nowDate);
             t.setTemp(tempValue);
@@ -488,20 +492,21 @@ public class MainActivity extends AppCompatActivity {
 /*
                 thData.removeAll(thData);
                 // 填充数据用于测试
-                for (int i = 0; i < 48; i++) {
+                int cntData = 30 * 24;
+                for (int i = 0; i < cntData; i++) {
                     Date nowDate = new Date();
                     TempHumiData data = new TempHumiData();
                     data.setDate(new Date(nowDate.getTime() + (long)i * 30 * 60 * 1000)); // 30分钟递进
                     SimpleDateFormat dateTag = new SimpleDateFormat("yyyy年M月d日 HH:mm:ss", Locale.CHINESE);
                     Log.d(TAG, "i: " + i + ", date: " + dateTag.format(data.getDate()));
-                    data.setTemp((float) (Math.random() * 70) - 15);
-                    data.setHumi((float) (Math.random() * 90) + 5);
+                    data.setTemp((float) (i * 80)/cntData - 20);
+                    data.setHumi((float) cntData - i);
                     thData.add(data);
-                    if (thData.size() > 48) {
+                    if (thData.size() > cntData) {
                         thData.remove(0);
                     }
                 }
- */
+*/
 
                 Intent intent = new Intent();
                 intent.putExtra("key", thData);

@@ -94,6 +94,9 @@ public class TempChartActivity extends FragmentActivity {
         data.setData(generateBarData());
 
         mChart.setData(data);
+        mChart.animateXY(800,800);//图表数据显示动画
+        mChart.setVisibleXRangeMaximum(24);//设置屏幕显示条数
+        mChart.moveViewToX(thData.size()); // 显示最新数据条目
         mChart.invalidate();
     }
 
