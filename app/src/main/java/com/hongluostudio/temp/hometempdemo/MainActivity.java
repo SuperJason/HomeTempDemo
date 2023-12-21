@@ -498,7 +498,7 @@ public class MainActivity extends AppCompatActivity {
                     TempHumiData data = new TempHumiData();
                     data.setDate(new Date(nowDate.getTime() + (long)i * 30 * 60 * 1000)); // 30分钟递进
                     SimpleDateFormat dateTag = new SimpleDateFormat("yyyy年M月d日 HH:mm:ss", Locale.CHINESE);
-                    Log.d(TAG, "i: " + i + ", date: " + dateTag.format(data.getDate()));
+                    //Log.d(TAG, "i: " + i + ", date: " + dateTag.format(data.getDate()));
                     data.setTemp((float) (i * 80)/cntData - 20);
                     data.setHumi((float) cntData - i);
                     thData.add(data);

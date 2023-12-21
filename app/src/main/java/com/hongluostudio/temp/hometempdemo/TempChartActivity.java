@@ -3,10 +3,9 @@ package com.hongluostudio.temp.hometempdemo;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
 
 import com.github.mikephil.charting.charts.CombinedChart;
 import com.github.mikephil.charting.charts.CombinedChart.DrawOrder;
@@ -20,19 +19,23 @@ import com.github.mikephil.charting.data.CombinedData;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.interfaces.datasets.IDataSet;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 // MPChartExample/src/com/xxmassdeveloper/mpchartexample/CombinedChartActivity.java
 public class TempChartActivity extends FragmentActivity {
 
+    protected final String TAG = getClass().getSimpleName();
     private CombinedChart mChart;
     ArrayList<TempHumiData> thData;
     public ArrayList<String> timeStamp;
+    private Timer mTimer;
+    private int mNoTouchCnt = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,7 +86,7 @@ public class TempChartActivity extends FragmentActivity {
         timeStamp = new ArrayList<>();
         for (int index = 0; index < thData.size(); index++) {
             Date date = thData.get(index).getDate();
-            SimpleDateFormat dateTag = new SimpleDateFormat("yyyy年M月d日 HH:mm:ss", Locale.CHINESE);
+            SimpleDateFormat dateTag = new SimpleDateFormat("yyyy-M-d HH:mm", Locale.CHINESE);
             timeStamp.add(dateTag.format(date));
         }
 
@@ -103,6 +106,20 @@ public class TempChartActivity extends FragmentActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        //Log.e(TAG, "onStart()");
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        mTimer.cancel();
+        overridePendingTransition(R.anim.move_left_in_activity, R.anim.move_right_out_activity);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //Log.e(TAG, "onResume()");
 
         // 隐藏虚拟按键及状态栏
         View v = getWindow().getDecorView();
@@ -110,12 +127,48 @@ public class TempChartActivity extends FragmentActivity {
                 | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                 | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
         v.setSystemUiVisibility(opt);
+
+        mTimer = new Timer();
+        mTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                mNoTouchCnt++;
+                //Log.e(TAG, "timer schedule, mNoTouchCnt: " + mNoTouchCnt);
+                if (mNoTouchCnt > 30) { // 30秒无操作返回时钟主页面
+                    finish();
+                    mTimer.cancel();
+                }
+            }
+        },1000,1000);
     }
 
     @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        overridePendingTransition(R.anim.move_left_in_activity, R.anim.move_right_out_activity);
+    protected void onPause() {
+        super.onPause();
+        //Log.e(TAG, "onPause()");
+        mTimer.cancel();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        //Log.e(TAG, "onStop()");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //Log.e(TAG, "onDestroy()");
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+/*
+        int action = event.getAction();
+        Log.e(TAG, "dispatchTouchEvent() " + action);
+*/
+        mNoTouchCnt = 0; // 有触摸操作阻止定时返回
+        return super.dispatchTouchEvent(event);
     }
 
     // 温度
@@ -166,40 +219,5 @@ public class TempChartActivity extends FragmentActivity {
         set.setAxisDependency(YAxis.AxisDependency.RIGHT);
 
         return d;
-    }
-
-    private float getRandom(float range, float startsfrom) {
-        return (float) (Math.random() * range) + startsfrom;
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.combined, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.actionToggleLineValues: {
-                for (IDataSet set : mChart.getData().getDataSets()) {
-                    if (set instanceof LineDataSet)
-                        set.setDrawValues(!set.isDrawValuesEnabled());
-                }
-
-                mChart.invalidate();
-                break;
-            }
-            case R.id.actionToggleBarValues: {
-                for (IDataSet set : mChart.getData().getDataSets()) {
-                    if (set instanceof BarDataSet)
-                        set.setDrawValues(!set.isDrawValuesEnabled());
-                }
-
-                mChart.invalidate();
-                break;
-            }
-        }
-        return true;
     }
 }
