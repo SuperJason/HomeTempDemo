@@ -50,6 +50,7 @@ public class TempChartActivity extends FragmentActivity {
         mChart.setDrawGridBackground(false);
         mChart.setDrawBarShadow(false);
         mChart.setDoubleTapToZoomEnabled(false);
+        mChart.setScaleYEnabled(false);
         mChart.setPinchZoom(true);//挤压缩放
 
         //mChart.getXAxis().setLabelRotationAngle(-20);//设置x轴字体显示角度
@@ -97,10 +98,12 @@ public class TempChartActivity extends FragmentActivity {
         data.setData(generateBarData());
 
         mChart.setData(data);
-        mChart.animateXY(800,800);//图表数据显示动画
-        mChart.setVisibleXRangeMaximum(24);//设置屏幕显示条数
-        mChart.moveViewToX(thData.size()); // 显示最新数据条目
-        mChart.invalidate();
+        mChart.animateXY(800,800); //图表数据显示动画
+        mChart.setVisibleXRangeMaximum(48); //设置初始屏幕显示条数
+        mChart.moveViewToX(thData.size());  //显示最新数据条目
+        mChart.invalidate(); //刷新显示
+
+        mChart.setVisibleXRangeMaximum(thData.size()); //双指缩放可以显示更多条数
     }
 
     @Override
