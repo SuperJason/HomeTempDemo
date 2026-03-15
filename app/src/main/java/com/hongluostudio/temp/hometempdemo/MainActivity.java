@@ -51,6 +51,9 @@ public class MainActivity extends AppCompatActivity {
     final int DATE_TIME_TO_SECOND = 1000;
     final int CACHED_DATA_COUNT_FOR_SHOW = 30 * 24; // 最多保存30天的数据
 
+    private MqttReporter mMqttReporter;
+    private float mCurrentLux = 0f;   // 实时环境光（lux）
+
     private final Timer mTimer = new Timer();
     private String mTemperatureStr, mHumidityStr;
     private int mUpdateLogCnt = 0;
@@ -150,6 +153,18 @@ public class MainActivity extends AppCompatActivity {
         //timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_squada_one_regular), Typeface.NORMAL);
         //timeTypeface = Typeface.create(ResourcesCompat.getFont(this, R.font.google_font_vt323_regular), Typeface.NORMAL);
 
+        // 初始化 MQTT 上报
+        mMqttReporter = new MqttReporter(this);
+        mMqttReporter.connect();
+
+        // 启动时加载本地温湿度历史数据（替换原来的 thData = new ArrayList<>()）
+        //   原代码：thData = new ArrayList<TempHumiData>();
+        //   改为：
+        thData = TempHumiStore.load(this, CACHED_DATA_COUNT_FOR_SHOW);
+
+        // 检查 App 更新（含设备ID静默更新）
+        AppUpdateManager.checkUpdate(this);
+
         //Log.e(TAG, "onCreate()\n");
     }
 
@@ -190,6 +205,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (mMqttReporter != null) mMqttReporter.disconnect();
         //Log.e(TAG, "onDestroy()\n");
     }
 
@@ -252,6 +268,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             mSetBrightnessInt = brightness;
+            mCurrentLux = lux;   // 保存原始 lux 供 MQTT 上报使用
         }
     }
 
@@ -352,6 +369,14 @@ public class MainActivity extends AppCompatActivity {
             if (thData.size() > CACHED_DATA_COUNT_FOR_SHOW) {
                 thData.remove(0);
             }
+        }
+
+        // ---- 持久化保存到本地 ----
+        TempHumiStore.save(this, thData);
+
+        // ---- MQTT 上报（每30分钟采样一次时上报）----
+        if (mMqttReporter != null) {
+            mMqttReporter.publish(tempValue, humiValue, mCurrentLux);
         }
 
         return 0;

@@ -1,8 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.hongluostudio.temp.hometempdemo">
+    package="com.hongluostudio.temp.hometempdemo"
+    android:versionCode="1"
+    android:versionName="1.0" >
 
+    <uses-sdk
+        android:minSdkVersion="22"
+        android:targetSdkVersion="28" />
+
+    <!-- 网络访问（MQTT + 版本检查） -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- APK 安装（自动更新） -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Paho MqttService 内部需要，缺少会崩溃 -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Paho 监听网络状态变化以自动重连 -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -10,15 +23,31 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
-        <activity android:name=".TempChartActivity"></activity>
-        <activity android:name=".MainActivity">
+        android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true" >
+
+        <!-- Paho MQTT 后台服务 -->
+        <service android:name="org.eclipse.paho.android.service.MqttService" />
+
+        <!-- FileProvider（供安装APK使用） -->
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="com.hongluostudio.temp.hometempdemo.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true" >
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_provider_paths" />
+        </provider>
+
+        <activity android:name="com.hongluostudio.temp.hometempdemo.TempChartActivity" />
+        <activity android:name="com.hongluostudio.temp.hometempdemo.MainActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
     </application>
 
 </manifest>

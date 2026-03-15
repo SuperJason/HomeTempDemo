@@ -16,6 +16,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
@@ -26,4 +30,9 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation files('libs/mpandroidchartlibrary-2-2-4.jar')
+
+    // Paho MQTT —— 直接引用放入 libs/ 的 JAR 文件
+    // 下载方法见下方说明
+    implementation files('libs/org.eclipse.paho.client.mqttv3-1.2.5.jar')
+    implementation files('libs/org.eclipse.paho.android.service-1.1.1.jar')
 }
