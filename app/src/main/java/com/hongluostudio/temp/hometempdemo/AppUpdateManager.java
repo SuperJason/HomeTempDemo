@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Handler;
 import android.provider.Settings;
 import android.support.v4.content.FileProvider;
 import android.util.Log;
@@ -38,13 +39,7 @@ import java.net.URL;
  * }
  *
  * silentDevices 列表中的设备：发现新版本直接静默下载安装，无任何弹窗。
- * 不在列表中的设备：弹窗提示，由用户决定是否更新。
- *
- * 使用：在 MainActivity.onCreate() 末尾调用
- *   AppUpdateManager.checkUpdate(this);
- *
- * 查看本机设备ID：
- *   Log.d("DeviceId", AppUpdateManager.getDeviceId(this));
+ * 不在列表中的设备：弹窗提示10秒，无操作自动关闭。
  */
 public class AppUpdateManager {
 
@@ -53,6 +48,9 @@ public class AppUpdateManager {
     // ★★★ 修改为实际的版本检查接口地址 ★★★
     private static final String VERSION_CHECK_URL =
             "http://hongluostudio.com/dev/update/version.json";
+
+    // 弹窗无操作自动关闭的秒数
+    private static final int AUTO_DISMISS_SECONDS = 10;
 
     // -------------------------------------------------------------------------
     // 获取设备唯一编号（Android ID，稳定且无需额外权限）
@@ -146,22 +144,52 @@ public class AppUpdateManager {
     }
 
     // -------------------------------------------------------------------------
-    // 弹窗（非静默设备）
+    // 弹窗（非静默设备）：10秒无操作自动关闭，标题实时显示倒计时
     // -------------------------------------------------------------------------
     private static void showUpdateDialog(final Context ctx,
                                          final String name,
                                          final String desc,
                                          final String url) {
-        new AlertDialog.Builder(ctx)
-                .setTitle("发现新版本 v" + name)
+
+        final AlertDialog dialog = new AlertDialog.Builder(ctx)
+                .setTitle("发现新版本 v" + name + "（" + AUTO_DISMISS_SECONDS + "秒后自动关闭）")
                 .setMessage(desc)
                 .setCancelable(false)
-                .setPositiveButton("立即更新", (d, w) -> {
-                    d.dismiss();
-                    new DownloadApkTask(ctx, false).execute(url);
+                .setPositiveButton("立即更新", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface d, int w) {
+                        d.dismiss();
+                        new DownloadApkTask(ctx, false).execute(url);
+                    }
                 })
-                .setNegativeButton("稍后", (d, w) -> d.dismiss())
-                .show();
+                .setNegativeButton("稍后", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface d, int w) {
+                        d.dismiss();
+                    }
+                })
+                .create();
+        dialog.show();
+
+        // 倒计时 Runnable：每秒更新标题，到0时自动 dismiss
+        final Handler handler = new Handler();
+        final int[] secondsLeft = {AUTO_DISMISS_SECONDS};
+        final Runnable[] countdown = {null};  // 数组包装，让匿名类内部能引用自身
+        countdown[0] = new Runnable() {
+            @Override
+            public void run() {
+                secondsLeft[0]--;
+                if (!dialog.isShowing()) return;  // 用户已手动点击，停止倒计时
+                if (secondsLeft[0] <= 0) {
+                    dialog.dismiss();
+                } else {
+                    dialog.setTitle("发现新版本 v" + name
+                            + "（" + secondsLeft[0] + "秒后自动关闭）");
+                    handler.postDelayed(countdown[0], 1000);
+                }
+            }
+        };
+        handler.postDelayed(countdown[0], 1000);
     }
 
     // -------------------------------------------------------------------------
@@ -217,7 +245,8 @@ public class AppUpdateManager {
             }
         }
 
-        @Override protected void onProgressUpdate(Integer... v) {
+        @Override
+        protected void onProgressUpdate(Integer... v) {
             if (mProgress != null) mProgress.setProgress(v[0]);
         }
 
