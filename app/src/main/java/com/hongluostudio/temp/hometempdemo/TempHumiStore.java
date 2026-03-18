@@ -98,7 +98,7 @@ public class TempHumiStore {
                 writer.newLine();
             }
             writer.flush();
-            Log.d(TAG, "-x-1-Saved " + list.size() + " records.");
+            Log.d(TAG, "Saved " + list.size() + " records.");
         } catch (IOException e) {
             Log.e(TAG, "Save failed: " + e.getMessage());
         } finally {
@@ -133,6 +133,16 @@ public class TempHumiStore {
         File file = getFile(context);
         if (file.exists()) file.delete();
         Log.d(TAG, "History cleared.");
+    }
+
+    // -------------------------------------------------------------------------
+    // 修剪本地历史文件
+    // 删除前1/3的数据，最多保留3年的数据，修剪后最少保存2年的数
+    // -------------------------------------------------------------------------
+    public static void trim(Context context, int maxCount) {
+        ArrayList<TempHumiData> list = load(context, maxCount);
+        while (list.size() > (maxCount - maxCount / 3)) list.remove(0);
+        save(context, list);
     }
 
     // -------------------------------------------------------------------------

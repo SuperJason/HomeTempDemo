@@ -6,7 +6,7 @@ android {
         applicationId "com.hongluostudio.temp.hometempdemo"
         minSdkVersion 22
         targetSdkVersion 28
-        versionCode 1
+        versionCode 2
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -32,7 +32,9 @@ dependencies {
     implementation files('libs/mpandroidchartlibrary-2-2-4.jar')
 
     // Paho MQTT —— 直接引用放入 libs/ 的 JAR 文件
-    // 下载方法见下方说明
+    // 下载链接
+    // https://repo1.maven.org/maven2/org/eclipse/paho/org.eclipse.paho.client.mqttv3/1.2.5/org.eclipse.paho.client.mqttv3-1.2.5.jar
+    // https://repo1.maven.org/maven2/org/eclipse/paho/org.eclipse.paho.android.service/1.1.1/org.eclipse.paho.android.service-1.1.1.jar
     implementation files('libs/org.eclipse.paho.client.mqttv3-1.2.5.jar')
     implementation files('libs/org.eclipse.paho.android.service-1.1.1.jar')
 }

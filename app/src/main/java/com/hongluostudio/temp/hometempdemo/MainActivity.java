@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int MIN_DISTANCE = 100;
     final int DATE_TIME_TO_MINUTE = 60 * 1000;
     final int DATE_TIME_TO_SECOND = 1000;
-    final int CACHED_DATA_COUNT_FOR_SHOW = 30 * 24; // 最多保存30天的数据
+    final int CACHED_DATA_COUNT_FOR_SHOW = 3 * 366 * 24; // 每30分钟采集一次数据，1天采集24次，最多保存3年的数据，存满后删除最早一年的数据
 
     private MqttReporter mMqttReporter;
     private float mCurrentLux = 0f;   // 实时环境光（lux）
@@ -114,8 +114,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        thData = new ArrayList<TempHumiData>();
-
         colorDateBg = this.getResources().getColor(R.color.colorDateBg);
         colorTimeBg = this.getResources().getColor(R.color.colorTimeBg);
         colorTimeFg = this.getResources().getColor(R.color.colorTimeFg);
@@ -158,8 +156,6 @@ public class MainActivity extends AppCompatActivity {
         mMqttReporter.connect();
 
         // 启动时加载本地温湿度历史数据（替换原来的 thData = new ArrayList<>()）
-        //   原代码：thData = new ArrayList<TempHumiData>();
-        //   改为：
         thData = TempHumiStore.load(this, CACHED_DATA_COUNT_FOR_SHOW);
 
         // 检查 App 更新（含设备ID静默更新）
@@ -360,23 +356,27 @@ public class MainActivity extends AppCompatActivity {
         if (thData.size() > 0) {
             timeDelta = nowDate.getTime() - thData.get(thData.size() - 1).getDate().getTime();
         }
+
         if (thData.size() == 0 || timeDelta > 30 * DATE_TIME_TO_MINUTE) {  // 数据采样间隔为30分钟，一天采样24
             TempHumiData t = new TempHumiData();
             t.setDate(nowDate);
             t.setTemp(tempValue);
             t.setHumi(humiValue);
             thData.add(t);
+
+            // ---- 持久化本地保存追加一条 ----
+            TempHumiStore.append(this, t);
+
             if (thData.size() > CACHED_DATA_COUNT_FOR_SHOW) {
-                thData.remove(0);
+                // ---- 修剪本地保存数据文件，1年执行一次 ----
+                TempHumiStore.trim(this, CACHED_DATA_COUNT_FOR_SHOW);
+                thData = TempHumiStore.load(this, CACHED_DATA_COUNT_FOR_SHOW);
             }
-        }
 
-        // ---- 持久化保存到本地 ----
-        TempHumiStore.save(this, thData);
-
-        // ---- MQTT 上报（每30分钟采样一次时上报）----
-        if (mMqttReporter != null) {
-            mMqttReporter.publish(tempValue, humiValue, mCurrentLux);
+            // ---- MQTT 上报（每30分钟采样一次时上报）----
+            if (mMqttReporter != null) {
+                mMqttReporter.publish(tempValue, humiValue, mCurrentLux);
+            }
         }
 
         return 0;
